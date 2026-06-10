@@ -13,6 +13,13 @@ import CustomerDetail from "@/pages/customer-detail";
 import Subscriptions from "@/pages/subscriptions";
 import SubscriptionDetail from "@/pages/subscription-detail";
 import NewSale from "@/pages/new-sale";
+import Dashboard from "@/pages/dashboard";
+import Expiring from "@/pages/expiring";
+import Settings from "@/pages/settings";
+import Users from "@/pages/users";
+import Audit from "@/pages/audit";
+import RevenueReport from "@/pages/revenue-report";
+import { AdminGuard } from "@/components/admin-guard";
 
 const queryClient = new QueryClient();
 
@@ -22,7 +29,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/">
         <AuthGuard>
-          <Products />
+          <Dashboard />
         </AuthGuard>
       </Route>
       <Route path="/products">
@@ -44,6 +51,11 @@ function Router() {
       </Route>
       <Route path="/subscriptions"><AuthGuard><Subscriptions /></AuthGuard></Route>
       <Route path="/sale/new"><AuthGuard><NewSale /></AuthGuard></Route>
+      <Route path="/expiring"><AuthGuard><Expiring /></AuthGuard></Route>
+      <Route path="/reports/revenue"><AuthGuard><RevenueReport /></AuthGuard></Route>
+      <Route path="/admin/settings"><AuthGuard><AdminGuard><Settings /></AdminGuard></AuthGuard></Route>
+      <Route path="/admin/users"><AuthGuard><AdminGuard><Users /></AdminGuard></AuthGuard></Route>
+      <Route path="/admin/audit"><AuthGuard><AdminGuard><Audit /></AdminGuard></AuthGuard></Route>
       <Route component={NotFound} />
     </Switch>
   );

@@ -76,7 +76,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     return;
   }
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, payload.userId));
-  if (!user) {
+  if (!user || user.disabled) {
     res.status(401).json({ error: "المستخدم غير موجود" });
     return;
   }

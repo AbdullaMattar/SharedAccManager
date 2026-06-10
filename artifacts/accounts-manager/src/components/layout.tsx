@@ -2,15 +2,18 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { useLogout } from "@workspace/api-client-react";
 import { strings } from "@/lib/strings";
-import { Package, Users, LogOut, Menu, UserRound, ReceiptText, ShoppingCart } from "lucide-react";
+import { Package, Users, LogOut, Menu, UserRound, ReceiptText, ShoppingCart, LayoutDashboard, CalendarClock, Settings, ShieldCheck, BarChart3 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useGetDashboard } from "@/lib/phase3-api";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const logout = useLogout();
+  const { data: dashboard } = useGetDashboard();
   const [location, setLocation] = useLocation();
+  const businessName = dashboard?.businessName || strings.app.title;
 
   const handleLogout = () => {
     logout.mutate(undefined, {
@@ -21,24 +24,32 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const navItems = [
+    { href: "/", label: strings.phase3.dashboard, icon: LayoutDashboard },
+    { href: "/expiring", label: strings.phase3.expiringSoon, icon: CalendarClock },
     { href: "/sale/new", label: strings.nav.newSale, icon: ShoppingCart, prominent: true },
     { href: "/products", label: strings.nav.products, icon: Package },
     { href: "/accounts", label: strings.nav.accounts, icon: Users },
     { href: "/customers", label: strings.nav.customers, icon: UserRound },
     { href: "/subscriptions", label: strings.nav.subscriptions, icon: ReceiptText },
+    { href: "/reports/revenue", label: strings.phase3.report, icon: BarChart3 },
+    ...(user?.role === "admin" ? [
+      { href: "/admin/settings", label: strings.phase3.settings, icon: Settings },
+      { href: "/admin/users", label: strings.phase3.users, icon: ShieldCheck },
+      { href: "/admin/audit", label: strings.phase3.audit, icon: ReceiptText },
+    ] : []),
   ];
 
   const Sidebar = () => (
     <div className="flex h-full flex-col bg-card border-e border-border">
       <div className="p-4 flex items-center justify-center border-b border-border">
-        <h1 className="font-bold text-lg text-primary">{strings.app.title}</h1>
+        <h1 className="font-bold text-lg text-primary">{businessName}</h1>
       </div>
       <div className="flex-1 overflow-auto py-4">
         <nav className="space-y-1 px-2">
           {navItems.map((item) => {
-            const isActive = location === item.href || location.startsWith(`${item.href}/`);
+            const isActive = item.href === "/" ? location === "/" : location === item.href || location.startsWith(`${item.href}/`);
             return (
-              <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive || item.prominent ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"} ${item.prominent ? "mb-3 shadow-sm" : ""}`} data-testid={`nav-${item.href}`}>
+              <Link key={item.href} href={item.href} className={`flex min-h-11 items-center gap-3 rounded-md px-3 py-2 transition-colors ${isActive || item.prominent ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"} ${item.prominent ? "mb-3 shadow-sm" : ""}`} data-testid={`nav-${item.href}`}>
                 <item.icon className="h-5 w-5" />
                 <span>{item.label}</span>
               </Link>
@@ -69,7 +80,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Mobile Header & Content */}
       <div className="flex flex-col flex-1 w-full overflow-hidden">
         <header className="md:hidden flex items-center justify-between p-4 bg-card border-b border-border shrink-0">
-          <h1 className="font-bold text-lg text-primary">{strings.app.title}</h1>
+          <h1 className="font-bold text-lg text-primary">{businessName}</h1>
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="shrink-0" data-testid="btn-mobile-menu">

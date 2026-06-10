@@ -26,6 +26,14 @@ tags:
     description: Sale operations
   - name: subscriptions
     description: Subscription operations
+  - name: dashboard
+    description: Dashboard and expiry operations
+  - name: settings
+    description: Admin settings operations
+  - name: users
+    description: Admin user management
+  - name: reports
+    description: Revenue reports
 
 paths:
   /healthz:
@@ -412,6 +420,11 @@ paths:
           required: false
           schema:
             type: integer
+        - name: action
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: Audit log entries
@@ -657,6 +670,184 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /subscriptions/{id}/renew:
+    post:
+      operationId: renewSubscription
+      tags: [subscriptions]
+      summary: Atomically renew into a new subscription with full payment
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenewalInput"
+      responses:
+        "201":
+          description: Renewal completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RenewalResult"
+        "409":
+          description: Subscription cannot be renewed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get expiry, inventory, and monthly revenue dashboard
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+
+  /expiring:
+    get:
+      operationId: listExpiringSubscriptions
+      tags: [dashboard]
+      summary: List active subscriptions expiring within the live reminder window
+      parameters:
+        - name: days
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 365
+      responses:
+        "200":
+          description: Expiring subscriptions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpiringResult"
+
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get live settings (admin only)
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    patch:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update live settings (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsUpdate"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List users (admin only)
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ManagedUser"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create user (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreateInput"
+      responses:
+        "201":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedUser"
+
+  /users/{id}:
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Edit or disable user (admin only)
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdateInput"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedUser"
+
+  /users/{id}/reset-password:
+    post:
+      operationId: resetUserPassword
+      tags: [users]
+      summary: Reset user password (admin only)
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordResetInput"
+      responses:
+        "200":
+          description: Password reset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /reports/revenue:
+    get:
+      operationId: getRevenueReport
+      tags: [reports]
+      summary: Get current-month revenue and product breakdown
+      responses:
+        "200":
+          description: Revenue report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevenueReport"
+
 components:
   parameters:
     Id:
@@ -709,6 +900,8 @@ components:
           type: string
         role:
           type: string
+        disabled:
+          type: boolean
 
     Product:
       type: object
@@ -1279,3 +1472,167 @@ components:
           $ref: "#/components/schemas/Payment"
         slot:
           $ref: "#/components/schemas/FreeSlot"
+
+    RenewalInput:
+      type: object
+      required: [durationDays, price, paymentMethod, paidAt]
+      properties:
+        durationDays:
+          type: integer
+          minimum: 1
+        price:
+          type: number
+          minimum: 0
+        paymentMethod:
+          type: string
+          enum: [cash, transfer, other]
+        paidAt:
+          type: string
+          format: date-time
+        notes:
+          type: ["string", "null"]
+
+    RenewalResult:
+      type: object
+      required: [subscription, payment, previousSubscriptionId]
+      properties:
+        subscription:
+          $ref: "#/components/schemas/Subscription"
+        payment:
+          $ref: "#/components/schemas/Payment"
+        previousSubscriptionId:
+          type: integer
+
+    Settings:
+      type: object
+      required: [reminderLeadDays, reminderRecipient, graceDays, businessName, currency]
+      properties:
+        reminderLeadDays:
+          type: integer
+        reminderRecipient:
+          type: string
+          enum: [staff, customer, both]
+        graceDays:
+          type: integer
+        businessName:
+          type: string
+        currency:
+          type: string
+
+    SettingsUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        reminder_lead_days:
+          type: integer
+          minimum: 1
+        reminder_recipient:
+          type: string
+          enum: [staff, customer, both]
+        grace_days:
+          type: integer
+          minimum: 0
+        business_name:
+          type: string
+        currency:
+          type: string
+
+    ManagedUser:
+      type: object
+      required: [id, name, email, role, disabled, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [admin, staff]
+        disabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    UserCreateInput:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        role:
+          type: string
+          enum: [admin, staff]
+
+    UserUpdateInput:
+      type: object
+      minProperties: 1
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [admin, staff]
+        disabled:
+          type: boolean
+
+    PasswordResetInput:
+      type: object
+      required: [password]
+      properties:
+        password:
+          type: string
+          minLength: 8
+
+    ExpiringResult:
+      type: object
+      required: [days, reminderRecipient, subscriptions]
+      properties:
+        days:
+          type: integer
+        reminderRecipient:
+          type: string
+          enum: [staff, customer, both]
+        subscriptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubscriptionSummary"
+
+    Dashboard:
+      type: object
+      additionalProperties: true
+
+    RevenueReport:
+      type: object
+      required: [month, revenue, byProduct, currency]
+      properties:
+        month:
+          type: string
+        revenue:
+          type: number
+        currency:
+          type: string
+        byProduct:
+          type: array
+          items:
+            type: object
+            required: [productId, productName, revenue]
+            properties:
+              productId:
+                type: integer
+              productName:
+                type: string
+              revenue:
+                type: number

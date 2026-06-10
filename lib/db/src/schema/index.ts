@@ -8,3 +8,4 @@ export * from "./payments";
 export * from "./settings";
 export * from "./audit-log";
 export * from "./phase2-validation";
+export * from "./phase3-validation";

@@ -17,6 +17,7 @@ import {
 import { asc, desc, eq, like, or, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/session";
 import { getRequestUser } from "../lib/request-user";
+import { computedSubscriptionStatus } from "../lib/subscription-status";
 
 const router: IRouter = Router();
 
@@ -42,7 +43,7 @@ async function customerSubscriptions(customerId: number) {
       startDate: subscriptionsTable.startDate,
       expiryDate: subscriptionsTable.expiryDate,
       price: subscriptionsTable.price,
-      status: subscriptionsTable.status,
+      status: computedSubscriptionStatus,
       notes: subscriptionsTable.notes,
       createdAt: subscriptionsTable.createdAt,
     })

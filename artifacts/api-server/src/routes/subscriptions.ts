@@ -1,55 +1,24 @@
 import { Router, type IRouter } from "express";
 import {
-  accountsTable,
   auditLogTable,
-  customersTable,
   db,
   paymentsTable,
-  productsTable,
   slotsTable,
   subscriptionsTable,
   usersTable,
   idParamsSchema,
   listSubscriptionsQuerySchema,
   subscriptionNotesSchema,
+  renewalInputSchema,
   validationError,
 } from "@workspace/db";
 import { and, desc, eq } from "drizzle-orm";
 import { requireAuth } from "../lib/session";
 import { getRequestUser } from "../lib/request-user";
+import { baseSubscriptionQuery } from "../lib/subscription-query";
+import { effectiveStatus, statusCondition } from "../lib/subscription-status";
 
 const router: IRouter = Router();
-
-const subscriptionSummary = {
-  id: subscriptionsTable.id,
-  customerId: customersTable.id,
-  customerName: customersTable.name,
-  slotId: slotsTable.id,
-  slotIndex: slotsTable.slotIndex,
-  accountId: accountsTable.id,
-  accountLabel: accountsTable.label,
-  productId: productsTable.id,
-  productName: productsTable.name,
-  startDate: subscriptionsTable.startDate,
-  expiryDate: subscriptionsTable.expiryDate,
-  price: subscriptionsTable.price,
-  status: subscriptionsTable.status,
-  notes: subscriptionsTable.notes,
-  createdAt: subscriptionsTable.createdAt,
-};
-
-function baseSubscriptionQuery() {
-  return db
-    .select(subscriptionSummary)
-    .from(subscriptionsTable)
-    .innerJoin(
-      customersTable,
-      eq(subscriptionsTable.customerId, customersTable.id),
-    )
-    .innerJoin(slotsTable, eq(subscriptionsTable.slotId, slotsTable.id))
-    .innerJoin(accountsTable, eq(slotsTable.accountId, accountsTable.id))
-    .innerJoin(productsTable, eq(accountsTable.productId, productsTable.id));
-}
 
 router.get("/subscriptions", requireAuth, async (req, res): Promise<void> => {
   const parsed = listSubscriptionsQuerySchema.safeParse(req.query);
@@ -60,7 +29,7 @@ router.get("/subscriptions", requireAuth, async (req, res): Promise<void> => {
 
   const conditions = [];
   if (parsed.data.status)
-    conditions.push(eq(subscriptionsTable.status, parsed.data.status));
+    conditions.push(statusCondition(parsed.data.status));
   if (parsed.data.customerId)
     conditions.push(eq(subscriptionsTable.customerId, parsed.data.customerId));
 
@@ -178,7 +147,7 @@ router.post(
         .where(eq(subscriptionsTable.id, params.data.id))
         .get();
       if (!subscription) return { error: "missing" as const };
-      if (subscription.status !== "active")
+      if (effectiveStatus(subscription) !== "active")
         return { error: "not_active" as const };
 
       const cancelled = tx
@@ -225,6 +194,72 @@ router.post(
       return;
     }
     res.json(result.subscription);
+  },
+);
+
+router.post(
+  "/subscriptions/:id/renew",
+  requireAuth,
+  async (req, res): Promise<void> => {
+    const params = idParamsSchema.safeParse(req.params);
+    const parsed = renewalInputSchema.safeParse(req.body);
+    if (!params.success || !parsed.success) {
+      res.status(400).json({ error: "بيانات التجديد غير صالحة" });
+      return;
+    }
+    const user = getRequestUser(req);
+    const result = db.transaction((tx) => {
+      const old = tx.select().from(subscriptionsTable)
+        .where(eq(subscriptionsTable.id, params.data.id)).get();
+      if (!old) return { error: "missing" as const };
+      if (old.status === "cancelled") return { error: "cancelled" as const };
+      const newer = tx.select({ id: subscriptionsTable.id }).from(subscriptionsTable)
+        .where(and(eq(subscriptionsTable.slotId, old.slotId), eq(subscriptionsTable.status, "active")))
+        .get();
+      if (newer && newer.id !== old.id) return { error: "already_renewed" as const };
+
+      const today = new Date().toISOString().slice(0, 10);
+      const startDate = old.expiryDate > today ? old.expiryDate : today;
+      const expiry = new Date(`${startDate}T00:00:00.000Z`);
+      expiry.setUTCDate(expiry.getUTCDate() + parsed.data.durationDays);
+
+      tx.update(subscriptionsTable).set({ status: "expired" })
+        .where(eq(subscriptionsTable.id, old.id)).run();
+      const subscription = tx.insert(subscriptionsTable).values({
+        slotId: old.slotId,
+        customerId: old.customerId,
+        startDate,
+        expiryDate: expiry.toISOString().slice(0, 10),
+        price: parsed.data.price,
+        status: "active",
+        notes: parsed.data.notes ?? old.notes,
+      }).returning().get();
+      const payment = tx.insert(paymentsTable).values({
+        subscriptionId: subscription.id,
+        amount: parsed.data.price,
+        method: parsed.data.paymentMethod,
+        paidAt: parsed.data.paidAt,
+        loggedBy: user.id,
+        notes: parsed.data.notes,
+      }).returning().get();
+      tx.update(slotsTable).set({ status: "occupied" }).where(eq(slotsTable.id, old.slotId)).run();
+      tx.insert(auditLogTable).values({
+        userId: user.id,
+        action: "renew",
+        entity: "subscription",
+        entityId: subscription.id,
+        detail: `تجديد الاشتراك ${old.id} باشتراك جديد ${subscription.id}`,
+      }).run();
+      return { subscription, payment, previousSubscriptionId: old.id };
+    });
+    if ("error" in result) {
+      const missing = result.error === "missing";
+      res.status(missing ? 404 : 409).json({
+        error: missing ? "الاشتراك غير موجود" : "لا يمكن تجديد هذا الاشتراك أو تم تجديده بالفعل",
+      });
+      return;
+    }
+    res.status(201).json(result);
   },
 );
 

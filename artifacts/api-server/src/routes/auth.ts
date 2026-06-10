@@ -17,7 +17,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   const { email, password } = parsed.data;
   const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
 
-  if (!user) {
+  if (!user || user.disabled) {
     res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
     return;
   }

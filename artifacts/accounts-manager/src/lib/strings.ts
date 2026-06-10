@@ -52,4 +52,18 @@ export const strings = {
     invalidDates: "تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية", createCustomerError: "تعذر إنشاء العميل",
   },
   payments: { amount: "المبلغ", method: "الطريقة", paidAt: "تاريخ الدفع", notes: "ملاحظات" },
+  phase3: {
+    dashboard: "لوحة المتابعة", expiringSoon: "تنتهي قريباً", overdue: "اشتراكات متأخرة", freeSlots: "الخانات المتاحة", quickTotals: "ملخص العمل",
+    withinOneDay: "خلال يوم", withinThreeDays: "خلال 3 أيام", withinSevenDays: "خلال 7 أيام", activeSubscriptions: "الاشتراكات النشطة", totalAccounts: "إجمالي الحسابات", monthlyRevenue: "إيرادات هذا الشهر",
+    needsAction: "تحتاج إلى إجراء", noOverdue: "لا توجد اشتراكات متأخرة", daysRemaining: (days: number) => days < 0 ? `متأخر ${Math.abs(days)} يوم` : days === 0 ? "ينتهي اليوم" : `باقي ${days} يوم`,
+    whatsappReminder: (name: string, product: string, date: string) => `مرحباً ${name}، نذكرك بأن اشتراك ${product} ينتهي بتاريخ ${date}. يرجى التواصل معنا للتجديد.`,
+    openWhatsapp: "إرسال تذكير", renew: "تجديد", renewTitle: "تجديد الاشتراك", renewDescription: "سيتم إنشاء اشتراك جديد وتسجيل الدفعة كاملة.", durationDays: "مدة التجديد بالأيام",
+    previousPrice: "سعر التجديد", renewSuccess: "تم تجديد الاشتراك بنجاح", renewError: "تعذر تجديد الاشتراك", settings: "الإعدادات", reminderLeadDays: "أيام التذكير قبل الانتهاء",
+    reminderRecipient: "مستلم التذكير", recipientStaff: "الموظف", recipientCustomer: "العميل", recipientBoth: "الموظف والعميل", graceDays: "فترة السماح بالأيام", businessName: "اسم النشاط",
+    currency: "العملة", settingsHint: "تطبق هذه القيم مباشرة على التنبيهات والتجديدات.", settingsSaved: "تم حفظ الإعدادات", users: "إدارة المستخدمين", addUser: "إضافة مستخدم",
+    editUser: "تعديل المستخدم", resetPassword: "إعادة تعيين كلمة المرور", newPassword: "كلمة المرور الجديدة", name: "الاسم", email: "البريد الإلكتروني", role: "الصلاحية",
+    roleAdmin: "مدير", roleStaff: "موظف", enabled: "مفعل", disabled: "معطل", userSaved: "تم حفظ المستخدم", passwordReset: "تم تحديث كلمة المرور", audit: "سجل التدقيق",
+    who: "المستخدم", action: "الإجراء", entity: "العنصر", when: "الوقت", allActions: "كل الإجراءات", report: "تقرير الإيرادات", revenueByProduct: "الإيرادات حسب المنتج",
+    paymentsCount: "عدد الدفعات", adminOnly: "هذه الصفحة متاحة للمدير فقط", loading: "جارٍ التحميل...", save: "حفظ", close: "إغلاق", notes: "ملاحظات",
+  },
 };

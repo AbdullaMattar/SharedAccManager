@@ -20,7 +20,7 @@ async function seed() {
       role: "admin",
     });
     logger.info({ email: adminEmail }, "Admin user created");
-    logger.info({ password: adminPassword }, "Admin password (change after first login)");
+    logger.info("Admin password loaded from configuration; change it after first login");
   } else {
     logger.info("Admin user already exists — skipping");
   }
