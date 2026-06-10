@@ -1,14 +1,16 @@
-import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
+import { useGetMe } from "@workspace/api-client-react";
 import { createContext, useContext, ReactNode } from "react";
 
+type MeData = NonNullable<ReturnType<typeof useGetMe>["data"]>;
+
 interface AuthContextType {
-  user: any;
+  user: MeData | undefined;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
-  user: null,
+  user: undefined,
   isLoading: true,
   isAuthenticated: false,
 });
@@ -19,16 +21,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       retry: 1,
       retryDelay: 1500,
       refetchOnWindowFocus: false,
-      queryKey: getGetMeQueryKey(),
-    }
+    },
   });
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      isLoading: isLoading && !isError,
-      isAuthenticated: !!user
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading: isLoading && !isError,
+        isAuthenticated: !!user,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
