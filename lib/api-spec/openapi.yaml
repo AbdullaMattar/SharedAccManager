@@ -20,6 +20,12 @@ tags:
     description: Slot operations
   - name: stats
     description: Statistics and summary operations
+  - name: customers
+    description: Customer operations
+  - name: sales
+    description: Sale operations
+  - name: subscriptions
+    description: Subscription operations
 
 paths:
   /healthz:
@@ -416,7 +422,249 @@ paths:
                 items:
                   $ref: "#/components/schemas/AuditLogEntry"
 
+  # Customers
+  /customers:
+    get:
+      operationId: listCustomers
+      tags: [customers]
+      summary: List or search customers by partial name or phone
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+    post:
+      operationId: createCustomer
+      tags: [customers]
+      summary: Create a customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerInput"
+      responses:
+        "201":
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "409":
+          description: Phone already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /customers/{id}:
+    get:
+      operationId: getCustomer
+      tags: [customers]
+      summary: Get customer detail, subscriptions, and total spent
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Customer detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateCustomer
+      tags: [customers]
+      summary: Update a customer
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerUpdate"
+      responses:
+        "200":
+          description: Customer updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "409":
+          description: Phone already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteCustomer
+      tags: [customers]
+      summary: Delete a customer without subscriptions
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Customer deleted
+        "409":
+          description: Customer has subscriptions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Sales
+  /sales/availability:
+    get:
+      operationId: getSaleAvailability
+      tags: [sales]
+      summary: List products with free slots and manually selectable free slots
+      responses:
+        "200":
+          description: Sale availability
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SaleAvailability"
+
+  /sales:
+    post:
+      operationId: createSale
+      tags: [sales]
+      summary: Atomically sell an auto-assigned or selected free slot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaleInput"
+      responses:
+        "201":
+          description: Sale completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SaleResult"
+        "409":
+          description: Slot is unavailable or already sold
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Subscriptions
+  /subscriptions:
+    get:
+      operationId: listSubscriptions
+      tags: [subscriptions]
+      summary: List subscriptions with optional status or customer filter
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/SubscriptionStatus"
+        - name: customerId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Subscriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionSummary"
+
+  /subscriptions/{id}:
+    get:
+      operationId: getSubscription
+      tags: [subscriptions]
+      summary: Get subscription detail, payments, and same-slot history
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Subscription detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /subscriptions/{id}/notes:
+    patch:
+      operationId: updateSubscriptionNotes
+      tags: [subscriptions]
+      summary: Update subscription notes
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscriptionNotesInput"
+      responses:
+        "200":
+          description: Notes updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+
+  /subscriptions/{id}/cancel:
+    post:
+      operationId: cancelSubscription
+      tags: [subscriptions]
+      summary: Atomically cancel an active subscription and free its slot
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Subscription cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+        "409":
+          description: Subscription is not active
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
   schemas:
     HealthStatus:
       type: object
@@ -464,7 +712,16 @@ components:
 
     Product:
       type: object
-      required: [id, name, service, defaultCapacity, defaultDurationDays, defaultPrice, createdAt]
+      required:
+        [
+          id,
+          name,
+          service,
+          defaultCapacity,
+          defaultDurationDays,
+          defaultPrice,
+          createdAt,
+        ]
       properties:
         id:
           type: integer
@@ -486,7 +743,8 @@ components:
 
     ProductInput:
       type: object
-      required: [name, service, defaultCapacity, defaultDurationDays, defaultPrice]
+      required:
+        [name, service, defaultCapacity, defaultDurationDays, defaultPrice]
       properties:
         name:
           type: string
@@ -552,7 +810,20 @@ components:
 
     AccountWithSlots:
       type: object
-      required: [id, productId, productName, label, email, capacity, status, createdAt, slots, freeSlots, occupiedSlots]
+      required:
+        [
+          id,
+          productId,
+          productName,
+          label,
+          email,
+          capacity,
+          status,
+          createdAt,
+          slots,
+          freeSlots,
+          occupiedSlots,
+        ]
       properties:
         id:
           type: integer
@@ -648,7 +919,15 @@ components:
 
     InventoryStats:
       type: object
-      required: [totalProducts, totalAccounts, totalSlots, freeSlots, occupiedSlots, accountsByStatus]
+      required:
+        [
+          totalProducts,
+          totalAccounts,
+          totalSlots,
+          freeSlots,
+          occupiedSlots,
+          accountsByStatus,
+        ]
       properties:
         totalProducts:
           type: integer
@@ -692,3 +971,311 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    Customer:
+      type: object
+      required: [id, name, phone, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        whatsapp:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    CustomerInput:
+      type: object
+      required: [name, phone]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+          minLength: 1
+        whatsapp:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+          format: email
+        notes:
+          type: ["string", "null"]
+
+    CustomerUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+          minLength: 1
+        whatsapp:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+          format: email
+        notes:
+          type: ["string", "null"]
+
+    CustomerDetail:
+      allOf:
+        - $ref: "#/components/schemas/Customer"
+        - type: object
+          required: [totalSpent, subscriptions]
+          properties:
+            totalSpent:
+              type: number
+            subscriptions:
+              type: array
+              items:
+                $ref: "#/components/schemas/SubscriptionSummary"
+
+    SubscriptionStatus:
+      type: string
+      enum: [active, expired, cancelled]
+
+    Subscription:
+      type: object
+      required:
+        [
+          id,
+          slotId,
+          customerId,
+          startDate,
+          expiryDate,
+          price,
+          status,
+          createdAt,
+        ]
+      properties:
+        id:
+          type: integer
+        slotId:
+          type: integer
+        customerId:
+          type: integer
+        startDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+        price:
+          type: number
+        status:
+          $ref: "#/components/schemas/SubscriptionStatus"
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    SubscriptionSummary:
+      type: object
+      required:
+        [
+          id,
+          customerId,
+          customerName,
+          slotId,
+          slotIndex,
+          accountId,
+          accountLabel,
+          productId,
+          productName,
+          startDate,
+          expiryDate,
+          price,
+          status,
+          createdAt,
+        ]
+      properties:
+        id:
+          type: integer
+        customerId:
+          type: integer
+        customerName:
+          type: string
+        slotId:
+          type: integer
+        slotIndex:
+          type: integer
+        accountId:
+          type: integer
+        accountLabel:
+          type: string
+        productId:
+          type: integer
+        productName:
+          type: string
+        startDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+        price:
+          type: number
+        status:
+          $ref: "#/components/schemas/SubscriptionStatus"
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    Payment:
+      type: object
+      required: [id, subscriptionId, amount, method, paidAt]
+      properties:
+        id:
+          type: integer
+        subscriptionId:
+          type: integer
+        amount:
+          type: number
+        method:
+          type: string
+          enum: [cash, transfer, other]
+        paidAt:
+          type: string
+          format: date-time
+        loggedBy:
+          type: ["integer", "null"]
+        loggedByName:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+
+    SubscriptionDetail:
+      allOf:
+        - $ref: "#/components/schemas/SubscriptionSummary"
+        - type: object
+          required: [payments, slotHistory]
+          properties:
+            payments:
+              type: array
+              items:
+                $ref: "#/components/schemas/Payment"
+            slotHistory:
+              type: array
+              items:
+                $ref: "#/components/schemas/SubscriptionSummary"
+
+    SubscriptionNotesInput:
+      type: object
+      required: [notes]
+      properties:
+        notes:
+          type: ["string", "null"]
+
+    SaleProductAvailability:
+      type: object
+      required:
+        [id, name, service, defaultDurationDays, defaultPrice, freeSlotCount]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        service:
+          type: string
+        defaultDurationDays:
+          type: integer
+        defaultPrice:
+          type: number
+        freeSlotCount:
+          type: integer
+
+    FreeSlot:
+      type: object
+      required: [id, accountId, accountLabel, productId, productName, slotIndex]
+      properties:
+        id:
+          type: integer
+        accountId:
+          type: integer
+        accountLabel:
+          type: string
+        productId:
+          type: integer
+        productName:
+          type: string
+        slotIndex:
+          type: integer
+
+    SaleAvailability:
+      type: object
+      required: [products, freeSlots]
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/SaleProductAvailability"
+        freeSlots:
+          type: array
+          items:
+            $ref: "#/components/schemas/FreeSlot"
+
+    SalePaymentInput:
+      type: object
+      required: [amount, method, paidAt]
+      properties:
+        amount:
+          type: number
+          minimum: 0
+        method:
+          type: string
+          enum: [cash, transfer, other]
+        paidAt:
+          type: string
+          format: date-time
+        notes:
+          type: ["string", "null"]
+
+    SaleInput:
+      type: object
+      required: [productId, customerId, startDate, expiryDate, price, payment]
+      properties:
+        productId:
+          type: integer
+        slotId:
+          type: integer
+          description: Omit to auto-assign the first free slot in the oldest active account.
+        customerId:
+          type: integer
+        startDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+        price:
+          type: number
+          minimum: 0
+        notes:
+          type: ["string", "null"]
+        payment:
+          $ref: "#/components/schemas/SalePaymentInput"
+
+    SaleResult:
+      type: object
+      required: [subscription, payment, slot]
+      properties:
+        subscription:
+          $ref: "#/components/schemas/Subscription"
+        payment:
+          $ref: "#/components/schemas/Payment"
+        slot:
+          $ref: "#/components/schemas/FreeSlot"

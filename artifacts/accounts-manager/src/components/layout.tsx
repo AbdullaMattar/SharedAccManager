@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { useLogout } from "@workspace/api-client-react";
 import { strings } from "@/lib/strings";
-import { Package, Users, BarChart3, LogOut, Menu } from "lucide-react";
+import { Package, Users, LogOut, Menu, UserRound, ReceiptText, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -21,8 +21,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const navItems = [
+    { href: "/sale/new", label: strings.nav.newSale, icon: ShoppingCart, prominent: true },
     { href: "/products", label: strings.nav.products, icon: Package },
     { href: "/accounts", label: strings.nav.accounts, icon: Users },
+    { href: "/customers", label: strings.nav.customers, icon: UserRound },
+    { href: "/subscriptions", label: strings.nav.subscriptions, icon: ReceiptText },
   ];
 
   const Sidebar = () => (
@@ -35,7 +38,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {navItems.map((item) => {
             const isActive = location === item.href || location.startsWith(`${item.href}/`);
             return (
-              <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`} data-testid={`nav-${item.href}`}>
+              <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive || item.prominent ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"} ${item.prominent ? "mb-3 shadow-sm" : ""}`} data-testid={`nav-${item.href}`}>
                 <item.icon className="h-5 w-5" />
                 <span>{item.label}</span>
               </Link>
@@ -71,7 +74,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="shrink-0" data-testid="btn-mobile-menu">
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle Menu</span>
+                <span className="sr-only">{strings.app.actions}</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="p-0 w-64">

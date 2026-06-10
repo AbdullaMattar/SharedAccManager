@@ -342,3 +342,288 @@ export const ListAuditLogResponseItem = zod.object({
 export const ListAuditLogResponse = zod.array(ListAuditLogResponseItem)
 
 
+/**
+ * @summary List or search customers by partial name or phone
+ */
+export const ListCustomersQueryParams = zod.object({
+  "q": zod.coerce.string().optional()
+})
+
+export const ListCustomersResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "phone": zod.string(),
+  "whatsapp": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+export const ListCustomersResponse = zod.array(ListCustomersResponseItem)
+
+
+/**
+ * @summary Create a customer
+ */
+
+
+
+
+export const CreateCustomerBody = zod.object({
+  "name": zod.string().min(1),
+  "phone": zod.string().min(1),
+  "whatsapp": zod.string().nullish(),
+  "email": zod.string().email().nullish(),
+  "notes": zod.string().nullish()
+})
+
+
+/**
+ * @summary Get customer detail, subscriptions, and total spent
+ */
+export const GetCustomerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetCustomerResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "phone": zod.string(),
+  "whatsapp": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+}).and(zod.object({
+  "totalSpent": zod.number(),
+  "subscriptions": zod.array(zod.object({
+  "id": zod.number(),
+  "customerId": zod.number(),
+  "customerName": zod.string(),
+  "slotId": zod.number(),
+  "slotIndex": zod.number(),
+  "accountId": zod.number(),
+  "accountLabel": zod.string(),
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "startDate": zod.coerce.date(),
+  "expiryDate": zod.coerce.date(),
+  "price": zod.number(),
+  "status": zod.enum(['active', 'expired', 'cancelled']),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+}))
+}))
+
+
+/**
+ * @summary Update a customer
+ */
+export const UpdateCustomerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+
+export const UpdateCustomerBody = zod.object({
+  "name": zod.string().min(1).optional(),
+  "phone": zod.string().min(1).optional(),
+  "whatsapp": zod.string().nullish(),
+  "email": zod.string().email().nullish(),
+  "notes": zod.string().nullish()
+})
+
+export const UpdateCustomerResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "phone": zod.string(),
+  "whatsapp": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a customer without subscriptions
+ */
+export const DeleteCustomerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary List products with free slots and manually selectable free slots
+ */
+export const GetSaleAvailabilityResponse = zod.object({
+  "products": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "service": zod.string(),
+  "defaultDurationDays": zod.number(),
+  "defaultPrice": zod.number(),
+  "freeSlotCount": zod.number()
+})),
+  "freeSlots": zod.array(zod.object({
+  "id": zod.number(),
+  "accountId": zod.number(),
+  "accountLabel": zod.string(),
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "slotIndex": zod.number()
+}))
+})
+
+
+/**
+ * @summary Atomically sell an auto-assigned or selected free slot
+ */
+export const createSaleBodyPriceMin = 0;
+
+export const createSaleBodyPaymentAmountMin = 0;
+
+
+
+export const CreateSaleBody = zod.object({
+  "productId": zod.number(),
+  "slotId": zod.number().optional().describe('Omit to auto-assign the first free slot in the oldest active account.'),
+  "customerId": zod.number(),
+  "startDate": zod.coerce.date(),
+  "expiryDate": zod.coerce.date(),
+  "price": zod.number().min(createSaleBodyPriceMin),
+  "notes": zod.string().nullish(),
+  "payment": zod.object({
+  "amount": zod.number().min(createSaleBodyPaymentAmountMin),
+  "method": zod.enum(['cash', 'transfer', 'other']),
+  "paidAt": zod.coerce.date(),
+  "notes": zod.string().nullish()
+})
+})
+
+
+/**
+ * @summary List subscriptions with optional status or customer filter
+ */
+export const ListSubscriptionsQueryParams = zod.object({
+  "status": zod.enum(['active', 'expired', 'cancelled']).optional(),
+  "customerId": zod.coerce.number().optional()
+})
+
+export const ListSubscriptionsResponseItem = zod.object({
+  "id": zod.number(),
+  "customerId": zod.number(),
+  "customerName": zod.string(),
+  "slotId": zod.number(),
+  "slotIndex": zod.number(),
+  "accountId": zod.number(),
+  "accountLabel": zod.string(),
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "startDate": zod.coerce.date(),
+  "expiryDate": zod.coerce.date(),
+  "price": zod.number(),
+  "status": zod.enum(['active', 'expired', 'cancelled']),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+export const ListSubscriptionsResponse = zod.array(ListSubscriptionsResponseItem)
+
+
+/**
+ * @summary Get subscription detail, payments, and same-slot history
+ */
+export const GetSubscriptionParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetSubscriptionResponse = zod.object({
+  "id": zod.number(),
+  "customerId": zod.number(),
+  "customerName": zod.string(),
+  "slotId": zod.number(),
+  "slotIndex": zod.number(),
+  "accountId": zod.number(),
+  "accountLabel": zod.string(),
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "startDate": zod.coerce.date(),
+  "expiryDate": zod.coerce.date(),
+  "price": zod.number(),
+  "status": zod.enum(['active', 'expired', 'cancelled']),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+}).and(zod.object({
+  "payments": zod.array(zod.object({
+  "id": zod.number(),
+  "subscriptionId": zod.number(),
+  "amount": zod.number(),
+  "method": zod.enum(['cash', 'transfer', 'other']),
+  "paidAt": zod.coerce.date(),
+  "loggedBy": zod.number().nullish(),
+  "loggedByName": zod.string().nullish(),
+  "notes": zod.string().nullish()
+})),
+  "slotHistory": zod.array(zod.object({
+  "id": zod.number(),
+  "customerId": zod.number(),
+  "customerName": zod.string(),
+  "slotId": zod.number(),
+  "slotIndex": zod.number(),
+  "accountId": zod.number(),
+  "accountLabel": zod.string(),
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "startDate": zod.coerce.date(),
+  "expiryDate": zod.coerce.date(),
+  "price": zod.number(),
+  "status": zod.enum(['active', 'expired', 'cancelled']),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+}))
+}))
+
+
+/**
+ * @summary Update subscription notes
+ */
+export const UpdateSubscriptionNotesParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateSubscriptionNotesBody = zod.object({
+  "notes": zod.string().nullable()
+})
+
+export const UpdateSubscriptionNotesResponse = zod.object({
+  "id": zod.number(),
+  "slotId": zod.number(),
+  "customerId": zod.number(),
+  "startDate": zod.coerce.date(),
+  "expiryDate": zod.coerce.date(),
+  "price": zod.number(),
+  "status": zod.enum(['active', 'expired', 'cancelled']),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Atomically cancel an active subscription and free its slot
+ */
+export const CancelSubscriptionParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CancelSubscriptionResponse = zod.object({
+  "id": zod.number(),
+  "slotId": zod.number(),
+  "customerId": zod.number(),
+  "startDate": zod.coerce.date(),
+  "expiryDate": zod.coerce.date(),
+  "price": zod.number(),
+  "status": zod.enum(['active', 'expired', 'cancelled']),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+

@@ -8,7 +8,7 @@ const resolvedPath = path.isAbsolute(dbPath)
   : path.resolve(process.cwd(), dbPath);
 
 export default defineConfig({
-  schema: path.join(__dirname, "./src/schema/index.ts"),
+  schema: "./src/schema/*.ts",
   dialect: "sqlite",
   dbCredentials: {
     url: resolvedPath,

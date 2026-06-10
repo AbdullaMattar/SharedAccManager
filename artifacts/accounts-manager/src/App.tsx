@@ -8,6 +8,11 @@ import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Products from "@/pages/products";
 import Accounts from "@/pages/accounts";
+import Customers from "@/pages/customers";
+import CustomerDetail from "@/pages/customer-detail";
+import Subscriptions from "@/pages/subscriptions";
+import SubscriptionDetail from "@/pages/subscription-detail";
+import NewSale from "@/pages/new-sale";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +35,15 @@ function Router() {
           <Accounts />
         </AuthGuard>
       </Route>
+      <Route path="/customers/:id">
+        {(params) => <AuthGuard><CustomerDetail id={Number(params.id)} /></AuthGuard>}
+      </Route>
+      <Route path="/customers"><AuthGuard><Customers /></AuthGuard></Route>
+      <Route path="/subscriptions/:id">
+        {(params) => <AuthGuard><SubscriptionDetail id={Number(params.id)} /></AuthGuard>}
+      </Route>
+      <Route path="/subscriptions"><AuthGuard><Subscriptions /></AuthGuard></Route>
+      <Route path="/sale/new"><AuthGuard><NewSale /></AuthGuard></Route>
       <Route component={NotFound} />
     </Switch>
   );

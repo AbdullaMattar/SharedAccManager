@@ -209,6 +209,185 @@ export interface AuditLogEntry {
   createdAt: string;
 }
 
+export interface Customer {
+  id: number;
+  name: string;
+  phone: string;
+  /** @nullable */
+  whatsapp?: string | null;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  createdAt: string;
+}
+
+export interface CustomerInput {
+  /** @minLength 1 */
+  name: string;
+  /** @minLength 1 */
+  phone: string;
+  /** @nullable */
+  whatsapp?: string | null;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  notes?: string | null;
+}
+
+export interface CustomerUpdate {
+  /** @minLength 1 */
+  name?: string;
+  /** @minLength 1 */
+  phone?: string;
+  /** @nullable */
+  whatsapp?: string | null;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  notes?: string | null;
+}
+
+export type SubscriptionStatus = typeof SubscriptionStatus[keyof typeof SubscriptionStatus];
+
+
+export const SubscriptionStatus = {
+  active: 'active',
+  expired: 'expired',
+  cancelled: 'cancelled',
+} as const;
+
+export interface SubscriptionSummary {
+  id: number;
+  customerId: number;
+  customerName: string;
+  slotId: number;
+  slotIndex: number;
+  accountId: number;
+  accountLabel: string;
+  productId: number;
+  productName: string;
+  startDate: string;
+  expiryDate: string;
+  price: number;
+  status: SubscriptionStatus;
+  /** @nullable */
+  notes?: string | null;
+  createdAt: string;
+}
+
+export type CustomerDetail = Customer & {
+  totalSpent: number;
+  subscriptions: SubscriptionSummary[];
+};
+
+export interface Subscription {
+  id: number;
+  slotId: number;
+  customerId: number;
+  startDate: string;
+  expiryDate: string;
+  price: number;
+  status: SubscriptionStatus;
+  /** @nullable */
+  notes?: string | null;
+  createdAt: string;
+}
+
+export type PaymentMethod = typeof PaymentMethod[keyof typeof PaymentMethod];
+
+
+export const PaymentMethod = {
+  cash: 'cash',
+  transfer: 'transfer',
+  other: 'other',
+} as const;
+
+export interface Payment {
+  id: number;
+  subscriptionId: number;
+  amount: number;
+  method: PaymentMethod;
+  paidAt: string;
+  /** @nullable */
+  loggedBy?: number | null;
+  /** @nullable */
+  loggedByName?: string | null;
+  /** @nullable */
+  notes?: string | null;
+}
+
+export type SubscriptionDetail = SubscriptionSummary & {
+  payments: Payment[];
+  slotHistory: SubscriptionSummary[];
+};
+
+export interface SubscriptionNotesInput {
+  /** @nullable */
+  notes: string | null;
+}
+
+export interface SaleProductAvailability {
+  id: number;
+  name: string;
+  service: string;
+  defaultDurationDays: number;
+  defaultPrice: number;
+  freeSlotCount: number;
+}
+
+export interface FreeSlot {
+  id: number;
+  accountId: number;
+  accountLabel: string;
+  productId: number;
+  productName: string;
+  slotIndex: number;
+}
+
+export interface SaleAvailability {
+  products: SaleProductAvailability[];
+  freeSlots: FreeSlot[];
+}
+
+export type SalePaymentInputMethod = typeof SalePaymentInputMethod[keyof typeof SalePaymentInputMethod];
+
+
+export const SalePaymentInputMethod = {
+  cash: 'cash',
+  transfer: 'transfer',
+  other: 'other',
+} as const;
+
+export interface SalePaymentInput {
+  /** @minimum 0 */
+  amount: number;
+  method: SalePaymentInputMethod;
+  paidAt: string;
+  /** @nullable */
+  notes?: string | null;
+}
+
+export interface SaleInput {
+  productId: number;
+  /** Omit to auto-assign the first free slot in the oldest active account. */
+  slotId?: number;
+  customerId: number;
+  startDate: string;
+  expiryDate: string;
+  /** @minimum 0 */
+  price: number;
+  /** @nullable */
+  notes?: string | null;
+  payment: SalePaymentInput;
+}
+
+export interface SaleResult {
+  subscription: Subscription;
+  payment: Payment;
+  slot: FreeSlot;
+}
+
 export type ListAccountsParams = {
 productId?: number;
 status?: string;
@@ -216,5 +395,14 @@ status?: string;
 
 export type ListAuditLogParams = {
 limit?: number;
+};
+
+export type ListCustomersParams = {
+q?: string;
+};
+
+export type ListSubscriptionsParams = {
+status?: SubscriptionStatus;
+customerId?: number;
 };
 
