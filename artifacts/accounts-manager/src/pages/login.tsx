@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useLogin } from "@workspace/api-client-react";
 import { useAuth } from "@/lib/auth";
@@ -6,7 +6,7 @@ import { strings } from "@/lib/strings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -18,6 +18,10 @@ export default function Login() {
   const loginMutation = useLogin();
   const { isAuthenticated, isLoading } = useAuth();
 
+  useEffect(() => {
+    if (isAuthenticated) setLocation("/");
+  }, [isAuthenticated, setLocation]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -26,10 +30,7 @@ export default function Login() {
     );
   }
 
-  if (isAuthenticated) {
-    setLocation("/products");
-    return null;
-  }
+  if (isAuthenticated) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,18 +38,11 @@ export default function Login() {
       { data: { email, password } },
       {
         onSuccess: () => {
-          toast({
-            title: strings.auth.loginSuccess,
-          });
-          setLocation("/products");
-          // reload window to get me query to re-run and set state globally
-          window.location.href = "/products";
+          toast({ title: strings.auth.loginSuccess });
+          setLocation("/");
         },
         onError: () => {
-          toast({
-            title: strings.auth.loginError,
-            variant: "destructive",
-          });
+          toast({ title: strings.auth.loginError, variant: "destructive" });
         },
       }
     );
@@ -74,6 +68,7 @@ export default function Login() {
                 required
                 dir="ltr"
                 className="text-start"
+                autoComplete="email"
                 data-testid="input-email"
               />
             </div>
@@ -88,6 +83,7 @@ export default function Login() {
                 required
                 dir="ltr"
                 className="text-start"
+                autoComplete="current-password"
                 data-testid="input-password"
               />
             </div>
