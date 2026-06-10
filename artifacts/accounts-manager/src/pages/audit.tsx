@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ChevronRight, ChevronLeft } from "lucide-react";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,6 +8,25 @@ import { useListAdminAuditLog } from "@/lib/phase3-api";
 import { strings } from "@/lib/strings";
 
 const PAGE_SIZE = 100;
+
+const ACTION_LABELS: Record<string, string> = {
+  sale: "بيع جديد",
+  renew: "تجديد اشتراك",
+  credential_reveal: "كشف بيانات الدخول",
+  settings_update: "تعديل الإعدادات",
+  user_create: "إنشاء مستخدم",
+  user_update: "تعديل مستخدم",
+  user_password_reset: "إعادة تعيين كلمة مرور",
+  subscription_cancel: "إلغاء اشتراك",
+};
+
+function formatDateTime(iso: string) {
+  try {
+    return format(new Date(iso), "yyyy/MM/dd HH:mm");
+  } catch {
+    return iso;
+  }
+}
 
 export default function Audit() {
   const [action, setAction] = useState("all");
@@ -32,8 +52,8 @@ export default function Audit() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{strings.phase3.allActions}</SelectItem>
-            {["sale", "renew", "credential_reveal", "settings_update", "user_create", "user_update", "user_password_reset", "subscription_cancel"].map((item) => (
-              <SelectItem key={item} value={item}>{item}</SelectItem>
+            {Object.entries(ACTION_LABELS).map(([key, label]) => (
+              <SelectItem key={key} value={key}>{label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -47,12 +67,12 @@ export default function Audit() {
           <Card key={entry.id}>
             <CardContent className="grid gap-2 p-4 text-sm sm:grid-cols-4">
               <Fact label={strings.phase3.who} value={entry.userName || "-"} />
-              <Fact label={strings.phase3.action} value={entry.action} />
+              <Fact label={strings.phase3.action} value={ACTION_LABELS[entry.action] || entry.action} />
               <Fact
                 label={strings.phase3.entity}
                 value={`${entry.entityType}${entry.entityId ? ` #${entry.entityId}` : ""}`}
               />
-              <Fact label={strings.phase3.when} value={entry.createdAt} />
+              <Fact label={strings.phase3.when} value={formatDateTime(entry.createdAt)} />
             </CardContent>
           </Card>
         ))}
@@ -67,16 +87,16 @@ export default function Audit() {
             onClick={() => setPage((p) => p - 1)}
           >
             <ChevronRight className="h-4 w-4 me-1" />
-            السابق
+            {strings.common.previous}
           </Button>
-          <span className="text-sm text-muted-foreground">صفحة {page + 1}</span>
+          <span className="text-sm text-muted-foreground">{strings.common.page} {page + 1}</span>
           <Button
             variant="outline"
             size="sm"
             disabled={!hasNextPage || isFetching}
             onClick={() => setPage((p) => p + 1)}
           >
-            التالي
+            {strings.common.next}
             <ChevronLeft className="h-4 w-4 ms-1" />
           </Button>
         </div>

@@ -36,6 +36,9 @@ export default function Products() {
           queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
           toast({ title: strings.products.deleteSuccess });
         },
+        onError: () => {
+          toast({ variant: "destructive", title: strings.app.deleteError });
+        },
       }
     );
   };
@@ -77,12 +80,12 @@ export default function Products() {
                     <CardDescription>{product.service}</CardDescription>
                   </div>
                   <div className="flex space-x-2 space-x-reverse">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(product)} data-testid={`btn-edit-product-${product.id}`}>
+                    <Button variant="ghost" size="icon" aria-label={strings.app.edit} onClick={() => handleEdit(product)} data-testid={`btn-edit-product-${product.id}`}>
                       <Edit2 className="h-4 w-4 text-muted-foreground" />
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" data-testid={`btn-delete-product-${product.id}`}>
+                        <Button variant="ghost" size="icon" aria-label={strings.app.delete} data-testid={`btn-delete-product-${product.id}`}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </AlertDialogTrigger>

@@ -65,6 +65,9 @@ export default function Accounts() {
           queryClient.invalidateQueries({ queryKey: getListAccountsQueryKey() });
           toast({ title: strings.accounts.deleteSuccess });
         },
+        onError: () => {
+          toast({ variant: "destructive", title: strings.app.deleteError });
+        },
       }
     );
   };
@@ -116,12 +119,12 @@ export default function Accounts() {
                     </CardDescription>
                   </div>
                   <div className="flex space-x-2 space-x-reverse">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(account)} data-testid={`btn-edit-account-${account.id}`}>
+                    <Button variant="ghost" size="icon" aria-label={strings.app.edit} onClick={() => handleEdit(account)} data-testid={`btn-edit-account-${account.id}`}>
                       <Edit2 className="h-4 w-4 text-muted-foreground" />
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" data-testid={`btn-delete-account-${account.id}`}>
+                        <Button variant="ghost" size="icon" aria-label={strings.app.delete} data-testid={`btn-delete-account-${account.id}`}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </AlertDialogTrigger>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight, Loader2 } from "lucide-react";
+import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { SubscriptionStatusBadge } from "@/components/subscription-status-badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -34,9 +35,10 @@ export default function SubscriptionDetail({ id }: { id: number }) {
       <div className="space-y-2"><label className="text-sm font-medium">{strings.subscriptions.notes}</label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} /><Button variant="outline" onClick={saveNotes} disabled={update.isPending}>{strings.app.save}</Button></div>
       {value.status !== "cancelled" && <div className="flex flex-wrap gap-2"><RenewSubscriptionDialog id={id} durationDays={value.productDefaultDurationDays} price={value.price} /><AlertDialog><AlertDialogTrigger asChild><Button variant="destructive">{strings.subscriptions.cancelAction}</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{strings.subscriptions.cancelConfirm}</AlertDialogTitle><AlertDialogDescription>{strings.subscriptions.cancelDescription}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{strings.app.cancel}</AlertDialogCancel><AlertDialogAction className="bg-destructive" onClick={cancelSubscription}>{strings.subscriptions.cancelAction}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>}
     </CardContent></Card>
-    <Card><CardHeader><CardTitle>{strings.subscriptions.payments}</CardTitle></CardHeader><CardContent>{!value.payments?.length ? <p className="text-sm text-muted-foreground">{strings.app.noData}</p> : <div className="space-y-2">{value.payments.map((payment) => <div key={payment.id} className="flex justify-between rounded-md border p-3 text-sm"><span>{payment.paidAt} · {paymentMethod(payment.method)}</span><strong>{payment.amount} {strings.common.currency}</strong></div>)}</div>}</CardContent></Card>
+    <Card><CardHeader><CardTitle>{strings.subscriptions.payments}</CardTitle></CardHeader><CardContent>{!value.payments?.length ? <p className="text-sm text-muted-foreground">{strings.app.noData}</p> : <div className="space-y-2">{value.payments.map((payment) => <div key={payment.id} className="flex justify-between rounded-md border p-3 text-sm"><span>{formatDateTime(payment.paidAt)} · {paymentMethod(payment.method)}</span><strong>{payment.amount} {strings.common.currency}</strong></div>)}</div>}</CardContent></Card>
     <Card><CardHeader><CardTitle>{strings.subscriptions.slotHistory}</CardTitle></CardHeader><CardContent>{!value.slotHistory?.length ? <p className="text-sm text-muted-foreground">{strings.app.noData}</p> : <div className="space-y-2">{value.slotHistory.map((item) => <Link key={item.id} href={`/subscriptions/${item.id}`} className="flex items-center justify-between rounded-md border p-3 text-sm hover:bg-muted/50"><span>{item.customerName} · {item.startDate} - {item.expiryDate}</span><SubscriptionStatusBadge status={item.status} /></Link>)}</div>}</CardContent></Card>
   </div>;
 }
 function Fact({ label, value }: { label: string; value?: string }) { return <div className="rounded-md bg-muted p-3"><p className="text-xs text-muted-foreground">{label}</p><p className="font-medium">{value || "-"}</p></div>; }
 function paymentMethod(method: string) { return method === "cash" ? strings.sale.methodCash : method === "transfer" ? strings.sale.methodTransfer : strings.sale.methodOther; }
+function formatDateTime(iso: string) { try { return format(new Date(iso), "yyyy/MM/dd HH:mm"); } catch { return iso; } }

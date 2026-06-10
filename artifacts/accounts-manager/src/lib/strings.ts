@@ -4,6 +4,11 @@ export const strings = {
     error: "حدث خطأ غير متوقع", retry: "إعادة المحاولة", save: "حفظ", cancel: "إلغاء", delete: "حذف",
     edit: "تعديل", create: "إنشاء", logout: "تسجيل الخروج", search: "بحث...", noData: "لا توجد بيانات لعرضها",
     actions: "الإجراءات", confirmDelete: "هل أنت متأكد من الحذف؟", confirmDeleteDesc: "لا يمكن التراجع عن هذا الإجراء.",
+    deleteError: "تعذر الحذف. قد يكون هذا العنصر مرتبطاً ببيانات أخرى.",
+  },
+  notFound: {
+    message: "الصفحة التي تبحث عنها غير موجودة.",
+    goHome: "العودة إلى الرئيسية",
   },
   auth: {
     login: "تسجيل الدخول", email: "البريد الإلكتروني", password: "كلمة المرور", emailPlaceholder: "أدخل البريد الإلكتروني",
@@ -23,7 +28,7 @@ export const strings = {
     statusActive: "نشط", statusDisabled: "معطل", statusNeedsAttention: "يحتاج انتباه",
   },
   slots: { free: "فارغ", occupied: "مشغول", disabled: "معطل" },
-  common: { required: "مطلوب", invalidEmail: "البريد الإلكتروني غير صالح", details: "التفاصيل", back: "رجوع", optional: "اختياري", currency: "د.أ", day: "يوم" },
+  common: { required: "مطلوب", invalidEmail: "البريد الإلكتروني غير صالح", details: "التفاصيل", back: "رجوع", optional: "اختياري", currency: "د.أ", day: "يوم", previous: "السابق", next: "التالي", page: "صفحة" },
   customers: {
     title: "العملاء", add: "إضافة عميل", edit: "تعديل العميل", name: "اسم العميل", phone: "رقم الهاتف", whatsapp: "رقم واتساب",
     email: "البريد الإلكتروني", notes: "ملاحظات", searchPlaceholder: "ابحث بالاسم أو رقم الهاتف", noResults: "لا يوجد عملاء مطابقون للبحث",
@@ -40,12 +45,12 @@ export const strings = {
   },
   sale: {
     title: "بيع جديد", intro: "أنشئ اشتراكاً وسجل الدفعة في خطوة واحدة", productStep: "1. اختر المنتج",
-    productHint: "تظهر المنتجات التي لديها خانات متاحة فقط", freeSlots: "خانات متاحة", slotStep: "2. اختر الخانة",
+    productHint: "تظهر المنتجات التي لديها خانات متاحة فقط", freeSlots: "خانات متاحة", slotStep: "3. اختر الخانة",
     autoAssign: "تعيين تلقائي", autoAssignDescription: "أول خانة متاحة في أقدم حساب", manualAssign: "اختيار خانة محددة",
-    selectSlot: "اختر الحساب والخانة", customerStep: "3. اختر العميل أو أنشئ عميلاً", selectedCustomer: "العميل المختار",
+    selectSlot: "اختر الحساب والخانة", customerStep: "2. اختر العميل أو أنشئ عميلاً", selectedCustomer: "العميل المختار",
     newCustomer: "عميل جديد", createCustomerInline: "إنشاء العميل واختياره", datesStep: "4. التواريخ والسعر",
-    paymentStep: "5. تسجيل الدفعة كاملة", paymentAmount: "مبلغ الدفعة", paymentMethod: "طريقة الدفع", paidAt: "وقت الدفع",
-    methodCash: "نقدي", methodTransfer: "تحويل", methodOther: "أخرى", confirmStep: "6. تأكيد البيع", confirm: "تأكيد البيع",
+    paymentAmount: "مبلغ الدفعة", paymentMethod: "طريقة الدفع", paidAt: "وقت الدفع",
+    methodCash: "نقدي", methodTransfer: "تحويل", methodOther: "أخرى", confirmStep: "5. تأكيد البيع", confirm: "تأكيد البيع",
     success: "تم البيع بنجاح", successDescription: "تم إنشاء الاشتراك وتسجيل الدفعة وحجز الخانة.", viewSubscription: "عرض الاشتراك",
     selectProductFirst: "اختر منتجاً لعرض الخانات المتاحة", noAvailableProducts: "لا توجد منتجات لديها خانات متاحة حالياً",
     noAvailableSlots: "لا توجد خانات متاحة لهذا المنتج", missingCustomer: "اختر عميلاً قبل تأكيد البيع",
@@ -55,7 +60,7 @@ export const strings = {
   phase3: {
     dashboard: "لوحة المتابعة", expiringSoon: "تنتهي قريباً", overdue: "اشتراكات متأخرة", freeSlots: "الخانات المتاحة", quickTotals: "ملخص العمل",
     withinOneDay: "خلال يوم", withinThreeDays: "خلال 3 أيام", withinSevenDays: "خلال 7 أيام", activeSubscriptions: "الاشتراكات النشطة", totalAccounts: "إجمالي الحسابات", monthlyRevenue: "إيرادات هذا الشهر",
-    needsAction: "تحتاج إلى إجراء", noOverdue: "لا توجد اشتراكات متأخرة", daysRemaining: (days: number) => days < 0 ? `متأخر ${Math.abs(days)} يوم` : days === 0 ? "ينتهي اليوم" : `باقي ${days} يوم`,
+    needsAction: "تحتاج إلى إجراء", noOverdue: "لا توجد اشتراكات متأخرة", noExpiringSoon: "لا توجد اشتراكات تنتهي في هذه الفترة", daysRemaining: (days: number) => days < 0 ? `متأخر ${Math.abs(days)} يوم` : days === 0 ? "ينتهي اليوم" : `باقي ${days} يوم`,
     whatsappReminder: (name: string, product: string, date: string) => `مرحباً ${name}، نذكرك بأن اشتراك ${product} ينتهي بتاريخ ${date}. يرجى التواصل معنا للتجديد.`,
     openWhatsapp: "إرسال تذكير", renew: "تجديد", renewTitle: "تجديد الاشتراك", renewDescription: "سيتم إنشاء اشتراك جديد وتسجيل الدفعة كاملة.", durationDays: "مدة التجديد بالأيام",
     previousPrice: "سعر التجديد", renewSuccess: "تم تجديد الاشتراك بنجاح", renewError: "تعذر تجديد الاشتراك", settings: "الإعدادات", reminderLeadDays: "أيام التذكير قبل الانتهاء",
