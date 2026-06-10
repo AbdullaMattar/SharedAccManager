@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useLogout } from "@workspace/api-client-react";
 import { strings } from "@/lib/strings";
@@ -11,6 +12,7 @@ import { useGetDashboard } from "@/lib/phase3-api";
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const logout = useLogout();
+  const queryClient = useQueryClient();
   const { data: dashboard } = useGetDashboard();
   const [location, setLocation] = useLocation();
   const businessName = dashboard?.businessName || strings.app.title;
@@ -18,6 +20,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const handleLogout = () => {
     logout.mutate(undefined, {
       onSuccess: () => {
+        queryClient.clear();
         setLocation("/login");
       }
     });
