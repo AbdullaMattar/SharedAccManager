@@ -14,7 +14,7 @@ const query = (values: Record<string, string | number | undefined>) => {
 };
 
 export type ExpiringSubscription = { id: number; customerName: string; phone: string; whatsapp?: string | null; productName: string; accountLabel: string; expiryDate: string; daysRemaining: number; price: number; defaultDurationDays: number };
-export type DashboardData = { expiringCounts: { oneDay: number; threeDays: number; sevenDays: number }; overdue: ExpiringSubscription[]; freeSlots: { productId: number; productName: string; freeCount: number }[]; totals: { activeSubscriptions: number; totalAccounts: number; monthlyRevenue: number }; currency?: string; businessName?: string };
+export type DashboardData = { expiringCounts: { oneDay: number; threeDays: number; sevenDays: number }; overdue: ExpiringSubscription[]; freeSlots: { productId: number; productName: string; freeCount: number; totalSlots: number }[]; totals: { activeSubscriptions: number; totalAccounts: number; monthlyRevenue: number }; currency?: string; businessName?: string };
 export type Settings = { reminderLeadDays: number; reminderRecipient: "staff" | "customer" | "both"; graceDays: number; businessName: string; currency: string };
 export type AdminUser = { id: number; name: string; email: string; role: "admin" | "staff"; enabled: boolean };
 export type AuditEntry = { id: number; userName?: string | null; action: string; entityType: string; entityId?: number | null; createdAt: string };
@@ -27,7 +27,7 @@ const normalizeSubscription = (item: RawSubscription): ExpiringSubscription => (
 });
 export const useGetDashboard = () => useQuery({ queryKey: ["phase3", "dashboard"], queryFn: async () => {
   const raw = await request<any>("/api/dashboard");
-  return { expiringCounts: { oneDay: raw.expiringCounts["1"] || 0, threeDays: raw.expiringCounts["3"] || 0, sevenDays: raw.expiringCounts["7"] || 0 }, overdue: raw.overdue.map(normalizeSubscription), freeSlots: raw.freeSlotsByProduct.map((item: any) => ({ ...item, freeCount: item.freeSlots })), totals: raw.totals, currency: raw.settings.currency, businessName: raw.settings.businessName } as DashboardData;
+  return { expiringCounts: { oneDay: raw.expiringCounts["1"] || 0, threeDays: raw.expiringCounts["3"] || 0, sevenDays: raw.expiringCounts["7"] || 0 }, overdue: raw.overdue.map(normalizeSubscription), freeSlots: raw.freeSlotsByProduct.map((item: any) => ({ ...item, freeCount: item.freeSlots, totalSlots: item.totalSlots ?? 0 })), totals: raw.totals, currency: raw.settings.currency, businessName: raw.settings.businessName } as DashboardData;
 } });
 export const useListExpiringSubscriptions = (days?: number) => useQuery({ queryKey: ["phase3", "expiring", days], queryFn: async () => {
   const raw = await request<{ subscriptions: RawSubscription[] }>(`/api/expiring${query({ days })}`);
@@ -43,5 +43,5 @@ export const useUpdateUser = () => useMutation({ mutationFn: async ({ id, data }
   const { enabled, ...rest } = data; return normalizeUser(await request<AdminUser>(`/api/users/${id}`, { method: "PATCH", body: JSON.stringify({ ...rest, ...(enabled === undefined ? {} : { disabled: !enabled }) }) }));
 } });
 export const useResetUserPassword = () => useMutation({ mutationFn: ({ id, password }: { id: number; password: string }) => request(`/api/users/${id}/reset-password`, { method: "POST", body: JSON.stringify({ password }) }) });
-export const useListAdminAuditLog = (action?: string) => useQuery({ queryKey: ["phase3", "audit", action], queryFn: async () => (await request<any[]>(`/api/stats/audit-log${query({ action })}`)).map((item) => ({ ...item, entityType: item.entity })) as AuditEntry[] });
+export const useListAdminAuditLog = (action?: string, offset?: number) => useQuery({ queryKey: ["phase3", "audit", action, offset], queryFn: async () => (await request<any[]>(`/api/stats/audit-log${query({ action, offset })}`)).map((item) => ({ ...item, entityType: item.entity })) as AuditEntry[] });
 export const useGetRevenueReport = () => useQuery({ queryKey: ["phase3", "revenue"], queryFn: async () => { const raw = await request<any>("/api/reports/revenue"); return { total: raw.revenue, products: raw.byProduct, currency: raw.currency } as RevenueReport; } });
