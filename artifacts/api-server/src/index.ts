@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { startDailyMaintenance } from "./jobs/daily-maintenance";
+import seed from "./seed";
 
 const rawPort = process.env["PORT"];
 
@@ -16,6 +17,7 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
+await seed();
 startDailyMaintenance();
 
 app.listen(port, (err) => {

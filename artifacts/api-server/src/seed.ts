@@ -90,12 +90,4 @@ async function seed() {
   }
 }
 
-seed()
-  .then(() => {
-    logger.info("Seed complete");
-    process.exit(0);
-  })
-  .catch((err) => {
-    logger.error({ err }, "Seed failed");
-    process.exit(1);
-  });
+export default seed;
