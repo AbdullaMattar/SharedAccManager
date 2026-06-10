@@ -16,12 +16,10 @@ export const customerInputSchema = z.object({
   name: z.string().trim().min(1, "اسم العميل مطلوب"),
   phone: z.string().trim().min(1, "رقم الهاتف مطلوب"),
   whatsapp: nullableText,
-  email: z
-    .string()
-    .trim()
-    .email("البريد الإلكتروني غير صالح")
-    .nullable()
-    .optional(),
+  email: z.preprocess(
+    (v) => (v === "" ? null : v),
+    z.string().trim().email("البريد الإلكتروني غير صالح").nullable().optional(),
+  ),
   notes: nullableText,
 });
 
