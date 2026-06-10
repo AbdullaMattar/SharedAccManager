@@ -14,12 +14,16 @@ import {
   listCustomersQuerySchema,
   validationError,
 } from "@workspace/db";
-import { asc, desc, eq, like, or, sql } from "drizzle-orm";
+import { asc, desc, eq, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/session";
 import { getRequestUser } from "../lib/request-user";
 import { computedSubscriptionStatus } from "../lib/subscription-status";
 
 const router: IRouter = Router();
+
+function escapeLike(value: string): string {
+  return value.replace(/[%_\\]/g, "\\$&");
+}
 
 function isUniquePhoneError(error: unknown): boolean {
   return (
@@ -66,16 +70,13 @@ router.get("/customers", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const search = parsed.data.q ? `%${parsed.data.q}%` : undefined;
+  const search = parsed.data.q ? `%${escapeLike(parsed.data.q)}%` : undefined;
   const customers = await db
     .select()
     .from(customersTable)
     .where(
       search
-        ? or(
-            like(customersTable.name, search),
-            like(customersTable.phone, search),
-          )
+        ? sql`(${customersTable.name} LIKE ${search} ESCAPE '\\' OR ${customersTable.phone} LIKE ${search} ESCAPE '\\')`
         : undefined,
     )
     .orderBy(asc(customersTable.name));
