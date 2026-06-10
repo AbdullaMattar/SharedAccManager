@@ -3,20 +3,30 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Shared Accounts Manager API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: products
+    description: Product operations
+  - name: accounts
+    description: Account operations
+  - name: slots
+    description: Slot operations
+  - name: stats
+    description: Statistics and summary operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +34,661 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # Auth
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Staff login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Staff logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current session user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Products
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List all products
+      responses:
+        "200":
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /products/{id}:
+    get:
+      operationId: getProduct
+      tags: [products]
+      summary: Get a product by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductUpdate"
+      responses:
+        "200":
+          description: Updated product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Delete a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Accounts
+  /accounts:
+    get:
+      operationId: listAccounts
+      tags: [accounts]
+      summary: List all accounts with slot summaries
+      parameters:
+        - name: productId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AccountWithSlots"
+    post:
+      operationId: createAccount
+      tags: [accounts]
+      summary: Create an account (auto-creates slots)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountWithSlots"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /accounts/{id}:
+    get:
+      operationId: getAccount
+      tags: [accounts]
+      summary: Get an account by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Account with slots
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountWithSlots"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateAccount
+      tags: [accounts]
+      summary: Update an account (reconciles slots on capacity change)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountUpdate"
+      responses:
+        "200":
+          description: Updated account with slots
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountWithSlots"
+        "400":
+          description: Validation error (e.g. cannot shrink below occupied slots)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteAccount
+      tags: [accounts]
+      summary: Delete an account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /accounts/{id}/reveal-password:
+    post:
+      operationId: revealAccountPassword
+      tags: [accounts]
+      summary: Decrypt and reveal account password (writes audit log)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Decrypted password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevealPasswordResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Slots
+  /accounts/{id}/slots:
+    get:
+      operationId: listAccountSlots
+      tags: [slots]
+      summary: List slots for an account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Slot"
+
+  # Stats / Summary endpoints
+  /stats/inventory:
+    get:
+      operationId: getInventoryStats
+      tags: [stats]
+      summary: Inventory overview — product counts, slot usage, account statuses
+      responses:
+        "200":
+          description: Inventory statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryStats"
+
+  /stats/audit-log:
+    get:
+      operationId: listAuditLog
+      tags: [stats]
+      summary: Recent audit log entries
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditLogEntry"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    SuccessResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthUser:
+      type: object
+      required: [id, name, email, role]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+
+    Product:
+      type: object
+      required: [id, name, service, defaultCapacity, defaultDurationDays, defaultPrice, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        service:
+          type: string
+        defaultCapacity:
+          type: integer
+        defaultDurationDays:
+          type: integer
+        defaultPrice:
+          type: number
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    ProductInput:
+      type: object
+      required: [name, service, defaultCapacity, defaultDurationDays, defaultPrice]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        service:
+          type: string
+          minLength: 1
+        defaultCapacity:
+          type: integer
+          minimum: 1
+        defaultDurationDays:
+          type: integer
+          minimum: 1
+        defaultPrice:
+          type: number
+          minimum: 0
+        notes:
+          type: string
+
+    ProductUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        service:
+          type: string
+          minLength: 1
+        defaultCapacity:
+          type: integer
+          minimum: 1
+        defaultDurationDays:
+          type: integer
+          minimum: 1
+        defaultPrice:
+          type: number
+          minimum: 0
+        notes:
+          type: ["string", "null"]
+
+    Account:
+      type: object
+      required: [id, productId, label, email, capacity, status, createdAt]
+      properties:
+        id:
+          type: integer
+        productId:
+          type: integer
+        label:
+          type: string
+        email:
+          type: string
+        capacity:
+          type: integer
+        status:
+          type: string
+          enum: [active, disabled, needs_attention]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    AccountWithSlots:
+      type: object
+      required: [id, productId, productName, label, email, capacity, status, createdAt, slots, freeSlots, occupiedSlots]
+      properties:
+        id:
+          type: integer
+        productId:
+          type: integer
+        productName:
+          type: string
+        label:
+          type: string
+        email:
+          type: string
+        capacity:
+          type: integer
+        status:
+          type: string
+          enum: [active, disabled, needs_attention]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/Slot"
+        freeSlots:
+          type: integer
+        occupiedSlots:
+          type: integer
+
+    AccountInput:
+      type: object
+      required: [productId, label, email, password, capacity, status]
+      properties:
+        productId:
+          type: integer
+        label:
+          type: string
+          minLength: 1
+        email:
+          type: string
+        password:
+          type: string
+          minLength: 1
+        capacity:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum: [active, disabled, needs_attention]
+        notes:
+          type: string
+
+    AccountUpdate:
+      type: object
+      properties:
+        label:
+          type: string
+          minLength: 1
+        email:
+          type: string
+        password:
+          type: string
+        capacity:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum: [active, disabled, needs_attention]
+        notes:
+          type: ["string", "null"]
+
+    Slot:
+      type: object
+      required: [id, accountId, slotIndex, status]
+      properties:
+        id:
+          type: integer
+        accountId:
+          type: integer
+        slotIndex:
+          type: integer
+        status:
+          type: string
+          enum: [free, occupied, disabled]
+
+    RevealPasswordResponse:
+      type: object
+      required: [password]
+      properties:
+        password:
+          type: string
+
+    InventoryStats:
+      type: object
+      required: [totalProducts, totalAccounts, totalSlots, freeSlots, occupiedSlots, accountsByStatus]
+      properties:
+        totalProducts:
+          type: integer
+        totalAccounts:
+          type: integer
+        totalSlots:
+          type: integer
+        freeSlots:
+          type: integer
+        occupiedSlots:
+          type: integer
+        accountsByStatus:
+          type: object
+          required: [active, disabled, needs_attention]
+          properties:
+            active:
+              type: integer
+            disabled:
+              type: integer
+            needs_attention:
+              type: integer
+
+    AuditLogEntry:
+      type: object
+      required: [id, action, entity, entityId, detail, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: ["integer", "null"]
+        userName:
+          type: ["string", "null"]
+        action:
+          type: string
+        entity:
+          type: string
+        entityId:
+          type: ["integer", "null"]
+        detail:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time

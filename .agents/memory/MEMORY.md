@@ -1,0 +1,2 @@
+- [SQLite vs DATABASE_URL conflict](sqlite-database-url.md) — Replit injects a Postgres DATABASE_URL secret; use SQLITE_URL instead in lib/db.
+- [Workflow port constraint](workflow-ports.md) — Replit workflow health check only supports specific ports; 18969 silently fails, use 5173 for Vite.
