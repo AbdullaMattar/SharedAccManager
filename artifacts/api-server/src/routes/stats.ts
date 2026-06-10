@@ -31,7 +31,8 @@ router.get("/stats/inventory", requireAuth, async (_req, res): Promise<void> => 
 
 router.get("/stats/audit-log", requireAuth, requireAdmin, async (req, res): Promise<void> => {
   const queryParsed = ListAuditLogQueryParams.safeParse(req.query);
-  const limit = queryParsed.success ? (queryParsed.data.limit ?? 50) : 50;
+  const limit = queryParsed.success ? (queryParsed.data.limit ?? 100) : 100;
+  const offset = typeof req.query.offset === "string" ? Math.max(0, Number(req.query.offset) || 0) : 0;
   const action = typeof req.query.action === "string" ? req.query.action : undefined;
 
   const entries = await db
@@ -49,7 +50,8 @@ router.get("/stats/audit-log", requireAuth, requireAdmin, async (req, res): Prom
     .leftJoin(usersTable, eq(auditLogTable.userId, usersTable.id))
     .where(action ? eq(auditLogTable.action, action) : undefined)
     .orderBy(desc(auditLogTable.createdAt))
-    .limit(limit);
+    .limit(limit)
+    .offset(offset);
 
   res.json(entries);
 });
