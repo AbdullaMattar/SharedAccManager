@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, accountsTable, productsTable, slotsTable, auditLogTable } from "@workspace/db";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, inArray } from "drizzle-orm";
 import { requireAuth } from "../lib/session";
 import { encrypt, decrypt } from "../lib/crypto";
 import {
@@ -66,14 +66,31 @@ router.get("/accounts", requireAuth, async (req, res): Promise<void> => {
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(accountsTable.createdAt);
 
-  const accountsWithSlots = await Promise.all(
-    accounts.map(async (a) => {
-      const slots = await db.select().from(slotsTable).where(eq(slotsTable.accountId, a.id)).orderBy(slotsTable.slotIndex);
-      const freeSlots = slots.filter((s) => s.status === "free").length;
-      const occupiedSlots = slots.filter((s) => s.status === "occupied").length;
-      return { ...a, slots, freeSlots, occupiedSlots };
-    }),
-  );
+  const accountIds = accounts.map((a) => a.id);
+  const allSlots = accountIds.length
+    ? await db
+        .select()
+        .from(slotsTable)
+        .where(inArray(slotsTable.accountId, accountIds))
+        .orderBy(slotsTable.accountId, slotsTable.slotIndex)
+    : [];
+
+  const slotsByAccount = new Map<number, (typeof slotsTable.$inferSelect)[]>();
+  for (const slot of allSlots) {
+    const group = slotsByAccount.get(slot.accountId) ?? [];
+    group.push(slot);
+    slotsByAccount.set(slot.accountId, group);
+  }
+
+  const accountsWithSlots = accounts.map((a) => {
+    const slots = slotsByAccount.get(a.id) ?? [];
+    return {
+      ...a,
+      slots,
+      freeSlots: slots.filter((s) => s.status === "free").length,
+      occupiedSlots: slots.filter((s) => s.status === "occupied").length,
+    };
+  });
 
   res.json(accountsWithSlots);
 });
