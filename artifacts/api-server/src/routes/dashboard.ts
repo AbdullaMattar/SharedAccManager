@@ -50,14 +50,18 @@ router.get("/dashboard", requireAuth, async (_req, res): Promise<void> => {
       .select({
         productId: productsTable.id,
         productName: productsTable.name,
-        freeSlots: sql<number>`count(${slotsTable.id})`,
+        freeSlots: sql<number>`count(case when ${slotsTable.status} = 'free' then 1 end)`,
+        totalSlots: sql<number>`count(${slotsTable.id})`,
       })
       .from(productsTable)
-      .leftJoin(accountsTable, eq(accountsTable.productId, productsTable.id))
       .leftJoin(
-        slotsTable,
-        and(eq(slotsTable.accountId, accountsTable.id), eq(slotsTable.status, "free")),
+        accountsTable,
+        and(
+          eq(accountsTable.productId, productsTable.id),
+          eq(accountsTable.status, "active"),
+        ),
       )
+      .leftJoin(slotsTable, eq(slotsTable.accountId, accountsTable.id))
       .groupBy(productsTable.id)
       .orderBy(asc(productsTable.name)),
     Promise.all([
