@@ -39,7 +39,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.get("/api/healthz", (_req, res) => res.json({ ok: true }));
 app.use("/api", router);
 
 const publicDir = path.resolve(process.cwd(), "public");
