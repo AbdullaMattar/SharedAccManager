@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CircleDollarSign, CreditCard, BarChart3, TrendingUp, TrendingDown } from "lucide-react";
+import { CircleDollarSign, BarChart3, TrendingUp, TrendingDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -64,16 +64,6 @@ export default function RevenueReport() {
             <div>
               <p>{strings.phase3.monthlyRevenue}</p>
               <strong className="text-3xl">{formatRevenue(currRev, (data?.paymentsCount ?? 0) > 0)}</strong>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-emerald-500 text-white">
-          <CardContent className="flex items-center gap-4 p-6">
-            <CreditCard className="h-9 w-9" />
-            <div>
-              <p>{strings.phase3.paymentsCount}</p>
-              <strong className="text-2xl">{data?.paymentsCount ?? 0}</strong>
             </div>
           </CardContent>
         </Card>
@@ -173,10 +163,7 @@ export default function RevenueReport() {
           <div className="space-y-3">
             {data?.products.map((item) => (
               <div key={item.productId} className="flex items-center justify-between rounded-md border p-4">
-                <span>
-                  {item.productName}
-                  <small className="block text-muted-foreground">{strings.phase3.paymentsCount}: {item.paymentsCount || 0}</small>
-                </span>
+                <span>{item.productName}</span>
                 <strong>{formatRevenue(item.revenue, (item.paymentsCount ?? 0) > 0)}</strong>
               </div>
             ))}
