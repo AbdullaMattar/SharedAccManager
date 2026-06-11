@@ -117,37 +117,41 @@ export default function Dashboard() {
             <CardTitle>{strings.phase3.revenueTrend}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div dir="ltr">
-              <ChartContainer config={trendConfig} className="h-56 w-full">
-                <BarChart data={revenue?.monthly ?? []}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="month"
-                    tickFormatter={(v: string) => strings.phase3.monthNames[parseInt(v.split("-")[1]) - 1]}
-                  />
-                  <YAxis />
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        labelFormatter={(_label, payload) => {
-                          if (!payload?.length) return "";
-                          return formatMonthLabel((payload[0] as { payload: { month: string } }).payload.month);
-                        }}
-                        formatter={(value) => [`${value} ${revCurrency}`, strings.phase3.monthlyRevenue]}
-                      />
-                    }
-                  />
-                  <Bar dataKey="revenue">
-                    {(revenue?.monthly ?? []).map((entry) => (
-                      <Cell
-                        key={entry.month}
-                        fill={entry.month === selectedMonth ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.35)"}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ChartContainer>
-            </div>
+            {(revenue?.monthly ?? []).every((m) => m.revenue === 0) ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">{strings.phase3.noDataYet}</p>
+            ) : (
+              <div dir="ltr">
+                <ChartContainer config={trendConfig} className="h-56 w-full">
+                  <BarChart data={revenue?.monthly ?? []}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                      dataKey="month"
+                      tickFormatter={(v: string) => strings.phase3.monthNames[parseInt(v.split("-")[1]) - 1]}
+                    />
+                    <YAxis />
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          labelFormatter={(_label, payload) => {
+                            if (!payload?.length) return "";
+                            return formatMonthLabel((payload[0] as { payload: { month: string } }).payload.month);
+                          }}
+                          formatter={(value) => [`${value} ${revCurrency}`, strings.phase3.monthlyRevenue]}
+                        />
+                      }
+                    />
+                    <Bar dataKey="revenue">
+                      {(revenue?.monthly ?? []).map((entry) => (
+                        <Cell
+                          key={entry.month}
+                          fill={entry.month === selectedMonth ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.35)"}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ChartContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -156,33 +160,37 @@ export default function Dashboard() {
             <CardTitle>{strings.phase3.revenueByProduct}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {(revenue?.products.length ?? 0) > 0 && (
-              <div dir="ltr">
-                <ChartContainer config={productConfig} className="h-40 w-full">
-                  <BarChart layout="vertical" data={revenue?.products ?? []}>
-                    <CartesianGrid horizontal={false} />
-                    <XAxis type="number" />
-                    <YAxis type="category" dataKey="productName" width={90} />
-                    <ChartTooltip
-                      content={
-                        <ChartTooltipContent
-                          formatter={(value) => [`${value} ${revCurrency}`, strings.phase3.monthlyRevenue]}
-                        />
-                      }
-                    />
-                    <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ChartContainer>
-              </div>
-            )}
-            <div className="space-y-3">
-              {revenue?.products.map((item) => (
-                <div key={item.productId} className="flex items-center justify-between rounded-md border p-4">
-                  <span>{item.productName}</span>
-                  <strong>{formatRevenue(item.revenue, (item.paymentsCount ?? 0) > 0)}</strong>
+            {(revenue?.products.length ?? 0) === 0 ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">{strings.phase3.noDataYet}</p>
+            ) : (
+              <>
+                <div dir="ltr">
+                  <ChartContainer config={productConfig} className="h-40 w-full">
+                    <BarChart layout="vertical" data={revenue?.products ?? []}>
+                      <CartesianGrid horizontal={false} />
+                      <XAxis type="number" />
+                      <YAxis type="category" dataKey="productName" width={90} />
+                      <ChartTooltip
+                        content={
+                          <ChartTooltipContent
+                            formatter={(value) => [`${value} ${revCurrency}`, strings.phase3.monthlyRevenue]}
+                          />
+                        }
+                      />
+                      <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ChartContainer>
                 </div>
-              ))}
-            </div>
+                <div className="space-y-3">
+                  {revenue?.products.map((item) => (
+                    <div key={item.productId} className="flex items-center justify-between rounded-md border p-4">
+                      <span>{item.productName}</span>
+                      <strong>{formatRevenue(item.revenue, (item.paymentsCount ?? 0) > 0)}</strong>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </section>
