@@ -1,5 +1,5 @@
 # ─── Stage 1: Install dependencies ───────────────────────────────────────────
-FROM node:22-alpine AS deps
+FROM node:22-slim AS deps
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -27,10 +27,10 @@ RUN pnpm --filter @workspace/api-server run build
 RUN PORT=5000 BASE_PATH=/ pnpm --filter @workspace/accounts-manager run build
 
 # ─── Stage 3: Production runtime ─────────────────────────────────────────────
-FROM node:22-alpine AS runner
+FROM node:22-slim AS runner
 WORKDIR /app
 
-RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nodeapp
+RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid 1001 nodeapp
 
 COPY --from=builder --chown=nodeapp:nodejs /app/artifacts/api-server/dist ./dist
 # Frontend build is served as static files from ./public
