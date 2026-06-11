@@ -336,6 +336,11 @@ export interface SubscriptionNotesInput {
   notes: string | null;
 }
 
+export interface CancelSubscriptionInput {
+  /** Whether the customer received a full refund when the subscription was cancelled */
+  refunded: boolean;
+}
+
 export interface SaleProductAvailability {
   id: number;
   name: string;

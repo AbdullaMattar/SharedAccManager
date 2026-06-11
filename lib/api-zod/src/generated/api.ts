@@ -625,6 +625,10 @@ export const CancelSubscriptionParams = zod.object({
   "id": zod.coerce.number()
 })
 
+export const CancelSubscriptionBody = zod.object({
+  "refunded": zod.boolean().describe('Whether the customer received a full refund when the subscription was cancelled')
+})
+
 export const CancelSubscriptionResponse = zod.object({
   "id": zod.number(),
   "slotId": zod.number(),
@@ -635,6 +639,14 @@ export const CancelSubscriptionResponse = zod.object({
   "status": zod.enum(['active', 'expired', 'cancelled']),
   "notes": zod.string().nullish(),
   "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Record a full refund for a cancelled subscription
+ */
+export const RefundSubscriptionParams = zod.object({
+  "id": zod.coerce.number()
 })
 
 

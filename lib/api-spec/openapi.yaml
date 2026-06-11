@@ -656,6 +656,12 @@ paths:
       summary: Atomically cancel an active subscription and free its slot
       parameters:
         - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelSubscriptionInput"
       responses:
         "200":
           description: Subscription cancelled
@@ -665,6 +671,27 @@ paths:
                 $ref: "#/components/schemas/Subscription"
         "409":
           description: Subscription is not active
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /subscriptions/{id}/refund:
+    post:
+      operationId: refundSubscription
+      tags: [subscriptions]
+      summary: Record a full refund for a cancelled subscription
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "201":
+          description: Refund recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        "409":
+          description: Subscription is not cancelled or has already been fully refunded
           content:
             application/json:
               schema:
@@ -1398,6 +1425,14 @@ components:
       properties:
         notes:
           type: ["string", "null"]
+
+    CancelSubscriptionInput:
+      type: object
+      required: [refunded]
+      properties:
+        refunded:
+          type: boolean
+          description: Whether the customer received a full refund when the subscription was cancelled
 
     SaleProductAvailability:
       type: object

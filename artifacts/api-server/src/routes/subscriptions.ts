@@ -9,11 +9,12 @@ import {
   usersTable,
   idParamsSchema,
   listSubscriptionsQuerySchema,
+  cancelSubscriptionInputSchema,
   subscriptionNotesSchema,
   renewalInputSchema,
   validationError,
 } from "@workspace/db";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/session";
 import { getRequestUser } from "../lib/request-user";
 import { baseSubscriptionQuery } from "../lib/subscription-query";
@@ -135,8 +136,13 @@ router.post(
   requireAuth,
   async (req, res): Promise<void> => {
     const params = idParamsSchema.safeParse(req.params);
+    const parsed = cancelSubscriptionInputSchema.safeParse(req.body);
     if (!params.success) {
       res.status(400).json({ error: validationError(params.error) });
+      return;
+    }
+    if (!parsed.success) {
+      res.status(400).json({ error: validationError(parsed.error) });
       return;
     }
 
@@ -173,13 +179,40 @@ router.post(
           ),
         )
         .run();
+
+      let refundAmount = 0;
+      if (parsed.data.refunded) {
+        const paymentTotal = tx
+          .select({
+            total: sql<number>`coalesce(sum(${paymentsTable.amount}), 0)`,
+          })
+          .from(paymentsTable)
+          .where(eq(paymentsTable.subscriptionId, subscription.id))
+          .get();
+        refundAmount = Math.max(paymentTotal?.total ?? 0, 0);
+        if (refundAmount > 0) {
+          tx.insert(paymentsTable)
+            .values({
+              subscriptionId: subscription.id,
+              amount: -refundAmount,
+              method: "other",
+              paidAt: new Date().toISOString(),
+              loggedBy: user.id,
+              notes: "استرداد كامل عند إلغاء الاشتراك",
+            })
+            .run();
+        }
+      }
+
       tx.insert(auditLogTable)
         .values({
           userId: user.id,
           action: "subscription_cancel",
           entity: "subscription",
           entityId: subscription.id,
-          detail: `إلغاء الاشتراك وتحرير المقعد ${subscription.slotId}`,
+          detail: parsed.data.refunded
+            ? `إلغاء الاشتراك وتحرير الخانة ${subscription.slotId} مع استرداد ${refundAmount}`
+            : `إلغاء الاشتراك وتحرير الخانة ${subscription.slotId} بدون استرداد`,
         })
         .run();
 
@@ -195,6 +228,79 @@ router.post(
       return;
     }
     res.json(result.subscription);
+  },
+);
+
+router.post(
+  "/subscriptions/:id/refund",
+  requireAuth,
+  async (req, res): Promise<void> => {
+    const params = idParamsSchema.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: validationError(params.error) });
+      return;
+    }
+
+    const user = getRequestUser(req);
+    const result = db.transaction((tx) => {
+      const subscription = tx
+        .select()
+        .from(subscriptionsTable)
+        .where(eq(subscriptionsTable.id, params.data.id))
+        .get();
+      if (!subscription) return { error: "missing" as const };
+      if (subscription.status !== "cancelled")
+        return { error: "not_cancelled" as const };
+
+      const paymentTotal = tx
+        .select({
+          total: sql<number>`coalesce(sum(${paymentsTable.amount}), 0)`,
+        })
+        .from(paymentsTable)
+        .where(eq(paymentsTable.subscriptionId, subscription.id))
+        .get();
+      const refundAmount = Math.max(paymentTotal?.total ?? 0, 0);
+      if (refundAmount <= 0) return { error: "already_refunded" as const };
+
+      const refund = tx
+        .insert(paymentsTable)
+        .values({
+          subscriptionId: subscription.id,
+          amount: -refundAmount,
+          method: "other",
+          paidAt: new Date().toISOString(),
+          loggedBy: user.id,
+          notes: "استرداد كامل بعد إلغاء الاشتراك",
+        })
+        .returning()
+        .get();
+      tx.insert(auditLogTable)
+        .values({
+          userId: user.id,
+          action: "subscription_refund",
+          entity: "subscription",
+          entityId: subscription.id,
+          detail: `تسجيل استرداد ${refundAmount} لاشتراك ملغي`,
+        })
+        .run();
+
+      return { refund };
+    });
+
+    if ("error" in result) {
+      if (result.error === "missing") {
+        res.status(404).json({ error: "الاشتراك غير موجود" });
+        return;
+      }
+      res.status(409).json({
+        error:
+          result.error === "not_cancelled"
+            ? "يمكن تسجيل الاسترداد للاشتراكات الملغية فقط"
+            : "تم استرداد مبلغ هذا الاشتراك بالكامل مسبقاً",
+      });
+      return;
+    }
+    res.status(201).json(result.refund);
   },
 );
 

@@ -18,6 +18,7 @@ const ACTION_LABELS: Record<string, string> = {
   user_update: "تعديل مستخدم",
   user_password_reset: "إعادة تعيين كلمة مرور",
   subscription_cancel: "إلغاء اشتراك",
+  subscription_refund: "إرجاع مبلغ اشتراك",
 };
 
 function formatDateTime(iso: string) {

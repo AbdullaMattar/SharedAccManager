@@ -52,7 +52,6 @@ export default function NewSale() {
 
   // Step 4 — Dates & price
   const [price, setPrice] = useState(0);
-  const [amount, setAmount] = useState(0);
   const [method, setMethod] = useState<"cash" | "transfer" | "other">("cash");
   const [paidAt, setPaidAt] = useState(nowDt());
   const [notes, setNotes] = useState("");
@@ -66,7 +65,6 @@ export default function NewSale() {
   useEffect(() => {
     if (!product) return;
     setPrice(product.defaultPrice);
-    setAmount(product.defaultPrice);
     setSelectedSlot(undefined);
     setSlotAssignment("auto");
   }, [product?.id]);
@@ -107,7 +105,7 @@ export default function NewSale() {
           price,
           notes: notes.trim() || undefined,
           payment: {
-            amount,
+            amount: price,
             method,
             paidAt: new Date(paidAt).toISOString(),
             notes: undefined,
@@ -387,25 +385,12 @@ export default function NewSale() {
                   min="0"
                   step="0.01"
                   value={price}
-                  onChange={(e) => {
-                    setPrice(Number(e.target.value));
-                    setAmount(Number(e.target.value));
-                  }}
+                  onChange={(e) => setPrice(Number(e.target.value))}
                 />
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="space-y-2">
-                <Label>{strings.sale.paymentAmount}</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(Number(e.target.value))}
-                />
-              </div>
+            <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>{strings.sale.paymentMethod}</Label>
                 <Select
@@ -473,7 +458,6 @@ export default function NewSale() {
                 }
               />
               <ConfirmRow label={strings.subscriptions.price} value={String(price)} />
-              <ConfirmRow label={strings.sale.paymentAmount} value={String(amount)} />
               <ConfirmRow
                 label={strings.sale.paymentMethod}
                 value={

@@ -61,7 +61,7 @@ export default function Dashboard() {
               value={data.totals.activeSubscriptions}
             />
           </Link>
-          <Link href="/accounts" className="block">
+          <Link href="/inventory" className="block">
             <TotalCard
               icon={Layers3}
               label={strings.phase3.totalAccounts}
@@ -138,7 +138,7 @@ export default function Dashboard() {
               return (
                 <Link
                   key={item.productId}
-                  href={`/accounts?productId=${item.productId}`}
+                  href="/inventory"
                   className="flex items-center gap-3 rounded-md bg-muted p-3 hover:bg-muted/70 transition-colors"
                 >
                   <span className="flex-1 text-sm">{item.productName}</span>

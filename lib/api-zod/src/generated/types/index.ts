@@ -16,6 +16,7 @@ export * from './accountWithSlots';
 export * from './accountWithSlotsStatus';
 export * from './auditLogEntry';
 export * from './authUser';
+export * from './cancelSubscriptionInput';
 export * from './customer';
 export * from './customerDetail';
 export * from './customerInput';

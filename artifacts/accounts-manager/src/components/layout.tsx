@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useLogout } from "@workspace/api-client-react";
 import { strings } from "@/lib/strings";
-import { Package, Users, LogOut, Menu, UserRound, ReceiptText, ShoppingCart, LayoutDashboard, CalendarClock, Settings, ShieldCheck, BarChart3, Loader2 } from "lucide-react";
+import { Package, LogOut, Menu, UserRound, ReceiptText, ShoppingCart, LayoutDashboard, CalendarClock, Settings, ShieldCheck, BarChart3, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -32,8 +32,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/", label: strings.phase3.dashboard, icon: LayoutDashboard },
     { href: "/expiring", label: strings.phase3.expiringSoon, icon: CalendarClock },
     { href: "/sale/new", label: strings.nav.newSale, icon: ShoppingCart, prominent: true },
-    { href: "/products", label: strings.nav.products, icon: Package },
-    { href: "/accounts", label: strings.nav.accounts, icon: Users },
+    { href: "/inventory", label: strings.nav.inventory, icon: Package },
     { href: "/customers", label: strings.nav.customers, icon: UserRound },
     { href: "/subscriptions", label: strings.nav.subscriptions, icon: ReceiptText },
     { href: "/reports/revenue", label: strings.phase3.report, icon: BarChart3 },
@@ -52,7 +51,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <div className="flex-1 overflow-auto py-4">
         <nav className="space-y-1 px-2">
           {navItems.map((item) => {
-            const isActive = item.href === "/" ? location === "/" : location === item.href || location.startsWith(`${item.href}/`);
+            const isInventoryRoute =
+              item.href === "/inventory" &&
+              ["/inventory", "/products", "/accounts"].some(
+                (path) => location === path || location.startsWith(`${path}/`),
+              );
+            const isActive = item.href === "/" ? location === "/" : isInventoryRoute || location === item.href || location.startsWith(`${item.href}/`);
             return (
               <Link key={item.href} href={item.href} className={`flex min-h-11 items-center gap-3 rounded-md px-3 py-2 transition-colors ${isActive ? "bg-primary text-primary-foreground" : item.prominent ? "bg-green-600 text-white hover:bg-green-700" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"} ${item.prominent ? "mb-3 shadow-sm" : ""}`} data-testid={`nav-${item.href}`}>
                 <item.icon className="h-5 w-5" />

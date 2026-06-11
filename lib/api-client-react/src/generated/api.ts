@@ -25,6 +25,7 @@ import type {
   AccountWithSlots,
   AuditLogEntry,
   AuthUser,
+  CancelSubscriptionInput,
   Customer,
   CustomerDetail,
   CustomerInput,
@@ -42,6 +43,7 @@ import type {
   LoginInput,
   ManagedUser,
   PasswordResetInput,
+  Payment,
   Product,
   ProductInput,
   ProductUpdate,
@@ -145,7 +147,8 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
   return { ...query, queryKey: queryOptions.queryKey };
-    }
+}
+
 export const getLoginUrl = () => {
 
 
@@ -2179,14 +2182,16 @@ export const getCancelSubscriptionUrl = (id: number,) => {
 /**
  * @summary Atomically cancel an active subscription and free its slot
  */
-export const cancelSubscription = async (id: number, options?: RequestInit): Promise<Subscription> => {
+export const cancelSubscription = async (id: number,
+    cancelSubscriptionInput: CancelSubscriptionInput, options?: RequestInit): Promise<Subscription> => {
 
   return customFetch<Subscription>(getCancelSubscriptionUrl(id),
   {
     ...options,
-    method: 'POST'
-
-
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      cancelSubscriptionInput,)
   }
 );}
 
@@ -2194,8 +2199,8 @@ export const cancelSubscription = async (id: number, options?: RequestInit): Pro
 
 
 export const getCancelSubscriptionMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelSubscription>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof cancelSubscription>>, TError,{id: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelSubscription>>, TError,{id: number;data: BodyType<CancelSubscriptionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelSubscription>>, TError,{id: number;data: BodyType<CancelSubscriptionInput>}, TContext> => {
 
 const mutationKey = ['cancelSubscription'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2207,10 +2212,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelSubscription>>, {id: number}> = (props) => {
-          const {id} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelSubscription>>, {id: number;data: BodyType<CancelSubscriptionInput>}> = (props) => {
+          const {id,data} = props ?? {};
 
-          return  cancelSubscription(id,requestOptions)
+          return  cancelSubscription(id,data,requestOptions)
         }
 
 
@@ -2221,21 +2226,91 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CancelSubscriptionMutationResult = NonNullable<Awaited<ReturnType<typeof cancelSubscription>>>
-
+    export type CancelSubscriptionMutationBody = BodyType<CancelSubscriptionInput>
     export type CancelSubscriptionMutationError = ErrorType<ErrorResponse>
 
     /**
  * @summary Atomically cancel an active subscription and free its slot
  */
 export const useCancelSubscription = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelSubscription>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelSubscription>>, TError,{id: number;data: BodyType<CancelSubscriptionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof cancelSubscription>>,
+        TError,
+        {id: number;data: BodyType<CancelSubscriptionInput>},
+        TContext
+      > => {
+      return useMutation(getCancelSubscriptionMutationOptions(options));
+    }
+
+export const getRefundSubscriptionUrl = (id: number,) => {
+
+
+
+
+  return `/api/subscriptions/${id}/refund`
+}
+
+/**
+ * @summary Record a full refund for a cancelled subscription
+ */
+export const refundSubscription = async (id: number, options?: RequestInit): Promise<Payment> => {
+
+  return customFetch<Payment>(getRefundSubscriptionUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getRefundSubscriptionMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refundSubscription>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof refundSubscription>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['refundSubscription'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof refundSubscription>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  refundSubscription(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RefundSubscriptionMutationResult = NonNullable<Awaited<ReturnType<typeof refundSubscription>>>
+
+    export type RefundSubscriptionMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Record a full refund for a cancelled subscription
+ */
+export const useRefundSubscription = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refundSubscription>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof refundSubscription>>,
         TError,
         {id: number},
         TContext
       > => {
-      return useMutation(getCancelSubscriptionMutationOptions(options));
+      return useMutation(getRefundSubscriptionMutationOptions(options));
     }
 
 export const getRenewSubscriptionUrl = (id: number,) => {

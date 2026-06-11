@@ -8,6 +8,7 @@ import {
   useGetSubscription,
   useListCustomers,
   useListSubscriptions,
+  useRefundSubscription,
   useUpdateCustomer,
   useUpdateSubscriptionNotes,
   type Customer as GeneratedCustomer,
@@ -27,6 +28,7 @@ export {
   useGetSubscription,
   useListCustomers,
   useListSubscriptions,
+  useRefundSubscription,
   useUpdateCustomer,
   useUpdateSubscriptionNotes as useUpdateSubscription,
 };

@@ -6,8 +6,7 @@ import { AuthProvider } from "@/lib/auth";
 import { AuthGuard } from "@/components/auth-guard";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
-import Products from "@/pages/products";
-import Accounts from "@/pages/accounts";
+import Inventory from "@/pages/inventory";
 import Customers from "@/pages/customers";
 import CustomerDetail from "@/pages/customer-detail";
 import Subscriptions from "@/pages/subscriptions";
@@ -32,14 +31,19 @@ function Router() {
           <Dashboard />
         </AuthGuard>
       </Route>
+      <Route path="/inventory">
+        <AuthGuard>
+          <Inventory />
+        </AuthGuard>
+      </Route>
       <Route path="/products">
         <AuthGuard>
-          <Products />
+          <Inventory />
         </AuthGuard>
       </Route>
       <Route path="/accounts">
         <AuthGuard>
-          <Accounts />
+          <Inventory />
         </AuthGuard>
       </Route>
       <Route path="/customers/:id">

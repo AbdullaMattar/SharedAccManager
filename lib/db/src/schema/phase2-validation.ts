@@ -52,6 +52,10 @@ export const subscriptionNotesSchema = z.object({
   notes: z.string().trim().nullable(),
 });
 
+export const cancelSubscriptionInputSchema = z.object({
+  refunded: z.boolean().default(false),
+});
+
 export function validationError(error: z.ZodError): string {
   return error.issues[0]?.message ?? "بيانات الطلب غير صالحة";
 }
