@@ -21,11 +21,23 @@ export function CustomerFormDialog({ open, onOpenChange, customer }: { open: boo
   const set = (key: keyof CustomerInput, value: string) => setForm((current) => ({ ...current, [key]: value }));
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
-    const data = { ...form, whatsapp: form.whatsapp || form.phone };
+    const data = { 
+      name: form.name,
+      phone: form.phone,
+      whatsapp: form.whatsapp || form.phone,
+      email: form.email || null,
+      notes: form.notes || null
+    };
+    
     const options = {
-      onSuccess: () => { queryClient.invalidateQueries(); toast({ title: customer ? strings.customers.updateSuccess : strings.customers.createSuccess }); onOpenChange(false); },
+      onSuccess: () => { 
+        queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+        toast({ title: customer ? strings.customers.updateSuccess : strings.customers.createSuccess }); 
+        onOpenChange(false); 
+      },
       onError: (error: any) => toast({ variant: "destructive", title: error?.response?.status === 409 ? strings.customers.duplicatePhone : strings.app.error }),
     };
+
     if (customer) {
       updateCustomer.mutate({ id: customer.id, data }, options);
     } else {

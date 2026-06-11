@@ -4,9 +4,12 @@ import { Layout } from "@/components/layout";
 import { Loader2 } from "lucide-react";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
-  if (isLoading) {
+  // If we have a user in the cache, we are authenticated even if fetching
+  const actuallyAuthenticated = isAuthenticated || !!user;
+
+  if (isLoading && !actuallyAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -14,7 +17,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!actuallyAuthenticated) {
     return <Redirect to="/login" />;
   }
 

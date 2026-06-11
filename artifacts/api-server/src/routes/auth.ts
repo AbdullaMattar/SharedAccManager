@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable } from "@workspace/db";
+import { db, usersTable, auditLogTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { setSession, clearSession, requireAuth } from "../lib/session";
@@ -18,17 +18,49 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
 
   if (!user || user.disabled) {
+    // If user exists but is disabled, log the attempt
+    if (user && user.disabled) {
+      db.insert(auditLogTable)
+        .values({
+          userId: user.id,
+          action: "login_failed",
+          entity: "user",
+          entityId: user.id,
+          detail: "محاولة دخول لحساب معطل",
+        })
+        .run();
+    }
     res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
     return;
   }
 
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) {
+    db.insert(auditLogTable)
+      .values({
+        userId: user.id,
+        action: "login_failed",
+        entity: "user",
+        entityId: user.id,
+        detail: "كلمة مرور خاطئة",
+      })
+      .run();
     res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
     return;
   }
 
   setSession(res, user.id);
+  
+  db.insert(auditLogTable)
+    .values({
+      userId: user.id,
+      action: "login_success",
+      entity: "user",
+      entityId: user.id,
+      detail: "تسجيل دخول ناجح",
+    })
+    .run();
+
   res.json({ id: user.id, name: user.name, email: user.email, role: user.role });
 });
 

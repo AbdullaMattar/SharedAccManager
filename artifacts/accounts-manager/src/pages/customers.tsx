@@ -8,19 +8,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useDebounce } from "@/hooks/use-debounce";
 import { Customer, useDeleteCustomer, useListCustomers } from "@/lib/phase2-api";
 import { strings } from "@/lib/strings";
 
 export default function Customers() {
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [formOpen, setFormOpen] = useState(false);
-  const { data: customers = [], isLoading } = useListCustomers({ q: search || undefined });
+  const { data: customers = [], isLoading } = useListCustomers({ q: debouncedSearch || undefined });
   const deleteCustomer = useDeleteCustomer();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const remove = (id: number) => deleteCustomer.mutate({ id }, {
-    onSuccess: () => { queryClient.invalidateQueries(); toast({ title: strings.customers.deleteSuccess }); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/customers"] }); toast({ title: strings.customers.deleteSuccess }); },
     onError: () => toast({ variant: "destructive", title: strings.customers.deleteBlocked }),
   });
   return <div className="space-y-5">
@@ -34,6 +36,6 @@ export default function Customers() {
     <CustomerFormDialog open={formOpen} onOpenChange={setFormOpen} customer={editing} />
   </div>;
 }
-const cleanPhone = (phone: string) => phone.replace(/[^\d]/g, "");
+const cleanPhone = (phone: string) => phone.replace(/[^\d+]/g, "");
 function Loading() { return <div className="flex h-48 items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>; }
 function Empty({ text }: { text: string }) { return <Card><CardContent className="flex flex-col items-center py-12 text-center text-muted-foreground"><UserRound className="mb-3 h-10 w-10 opacity-30" />{text}</CardContent></Card>; }

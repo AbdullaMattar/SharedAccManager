@@ -61,7 +61,11 @@ export function setSession(res: Response, userId: number): void {
 }
 
 export function clearSession(res: Response): void {
-  res.clearCookie(SESSION_COOKIE);
+  res.clearCookie(SESSION_COOKIE, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
 }
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {

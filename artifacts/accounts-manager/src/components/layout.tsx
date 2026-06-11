@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useLogout } from "@workspace/api-client-react";
 import { strings } from "@/lib/strings";
-import { Package, Users, LogOut, Menu, UserRound, ReceiptText, ShoppingCart, LayoutDashboard, CalendarClock, Settings, ShieldCheck, BarChart3 } from "lucide-react";
+import { Package, Users, LogOut, Menu, UserRound, ReceiptText, ShoppingCart, LayoutDashboard, CalendarClock, Settings, ShieldCheck, BarChart3, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -20,6 +20,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const handleLogout = () => {
     logout.mutate(undefined, {
       onSuccess: () => {
+        // Explicitly nullify auth state
+        queryClient.setQueryData(["/api/auth/me"], null);
         queryClient.clear();
         setLocation("/login");
       }
@@ -65,8 +67,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <p className="text-sm font-medium text-foreground">{user?.name}</p>
           <p className="text-xs text-muted-foreground">{user?.email}</p>
         </div>
-        <Button variant="outline" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10" onClick={handleLogout} data-testid="btn-logout">
-          <LogOut className="h-4 w-4 me-2 rtl:rotate-180" />
+        <Button variant="outline" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10" onClick={handleLogout} disabled={logout.isPending} data-testid="btn-logout">
+          {logout.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin me-2" />
+          ) : (
+            <LogOut className="h-4 w-4 me-2 rtl:rotate-180" />
+          )}
           {strings.app.logout}
         </Button>
       </div>
