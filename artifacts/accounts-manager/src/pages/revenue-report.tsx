@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CircleDollarSign, BarChart3, TrendingUp, TrendingDown } from "lucide-react";
+import { CircleDollarSign, TrendingUp, TrendingDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -68,17 +68,7 @@ export default function RevenueReport() {
           </CardContent>
         </Card>
 
-        <Card className="bg-violet-500 text-white">
-          <CardContent className="flex items-center gap-4 p-6">
-            <BarChart3 className="h-9 w-9" />
-            <div>
-              <p>{strings.phase3.averagePayment}</p>
-              <strong className="text-2xl">{(data?.avgPayment ?? 0).toFixed(1)} {currency}</strong>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={pctChange !== null && pctChange >= 0 ? "bg-green-500 text-white" : "bg-red-500 text-white"}>
+<Card className={pctChange !== null && pctChange >= 0 ? "bg-green-500 text-white" : "bg-red-500 text-white"}>
           <CardContent className="flex items-center gap-4 p-6">
             {pctChange !== null && pctChange >= 0
               ? <TrendingUp className="h-9 w-9" />
