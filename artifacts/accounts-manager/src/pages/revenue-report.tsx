@@ -68,35 +68,35 @@ export default function RevenueReport() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-emerald-500 text-white">
           <CardContent className="flex items-center gap-4 p-6">
-            <CreditCard className="h-9 w-9 text-muted-foreground" />
+            <CreditCard className="h-9 w-9" />
             <div>
-              <p className="text-sm text-muted-foreground">{strings.phase3.paymentsCount}</p>
+              <p>{strings.phase3.paymentsCount}</p>
               <strong className="text-2xl">{data?.paymentsCount ?? 0}</strong>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-violet-500 text-white">
           <CardContent className="flex items-center gap-4 p-6">
-            <BarChart3 className="h-9 w-9 text-muted-foreground" />
+            <BarChart3 className="h-9 w-9" />
             <div>
-              <p className="text-sm text-muted-foreground">{strings.phase3.averagePayment}</p>
+              <p>{strings.phase3.averagePayment}</p>
               <strong className="text-2xl">{(data?.avgPayment ?? 0).toFixed(1)} {currency}</strong>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={pctChange !== null && pctChange >= 0 ? "bg-green-500 text-white" : "bg-red-500 text-white"}>
           <CardContent className="flex items-center gap-4 p-6">
             {pctChange !== null && pctChange >= 0
-              ? <TrendingUp className="h-9 w-9 text-green-500" />
-              : <TrendingDown className="h-9 w-9 text-red-500" />
+              ? <TrendingUp className="h-9 w-9" />
+              : <TrendingDown className="h-9 w-9" />
             }
             <div>
-              <p className="text-sm text-muted-foreground">{strings.phase3.changeVsPrevMonth}</p>
-              <strong className={`text-2xl ${pctChange === null ? "" : pctChange >= 0 ? "text-green-500" : "text-red-500"}`}>
+              <p>{strings.phase3.changeVsPrevMonth}</p>
+              <strong className="text-2xl">
                 {pctChange === null ? "—" : `${pctChange >= 0 ? "+" : ""}${pctChange.toFixed(1)}%`}
               </strong>
             </div>

@@ -20,6 +20,34 @@ export default function Dashboard() {
         <p className="text-sm text-muted-foreground">{strings.phase3.needsAction}</p>
       </div>
 
+      {/* Quick totals */}
+      <section>
+        <h2 className="mb-3 font-bold">{strings.phase3.quickTotals}</h2>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Link href="/subscriptions" className="block">
+            <TotalCard
+              icon={UserCheck}
+              label={strings.phase3.activeSubscriptions}
+              value={data.totals.activeSubscriptions}
+            />
+          </Link>
+          <Link href="/inventory" className="block">
+            <TotalCard
+              icon={Layers3}
+              label={strings.phase3.totalAccounts}
+              value={data.totals.totalAccounts}
+            />
+          </Link>
+          <Link href="/reports/revenue" className="block">
+            <TotalCard
+              icon={CircleDollarSign}
+              label={strings.phase3.monthlyRevenue}
+              value={`${data.totals.monthlyRevenue} ${currency}`}
+            />
+          </Link>
+        </div>
+      </section>
+
       {/* Renewal alerts */}
       <Card>
         <CardHeader className="pb-2">
@@ -49,34 +77,6 @@ export default function Dashboard() {
           ))}
         </CardContent>
       </Card>
-
-      {/* Quick totals */}
-      <section>
-        <h2 className="mb-3 font-bold">{strings.phase3.quickTotals}</h2>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Link href="/subscriptions" className="block">
-            <TotalCard
-              icon={UserCheck}
-              label={strings.phase3.activeSubscriptions}
-              value={data.totals.activeSubscriptions}
-            />
-          </Link>
-          <Link href="/inventory" className="block">
-            <TotalCard
-              icon={Layers3}
-              label={strings.phase3.totalAccounts}
-              value={data.totals.totalAccounts}
-            />
-          </Link>
-          <Link href="/reports/revenue" className="block">
-            <TotalCard
-              icon={CircleDollarSign}
-              label={strings.phase3.monthlyRevenue}
-              value={`${data.totals.monthlyRevenue} ${currency}`}
-            />
-          </Link>
-        </div>
-      </section>
 
       {/* Overdue + Free slots */}
       <div className="grid gap-5 lg:grid-cols-2">
