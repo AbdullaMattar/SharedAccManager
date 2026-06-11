@@ -13,7 +13,7 @@ COPY artifacts/api-server/package.json ./artifacts/api-server/
 COPY artifacts/accounts-manager/package.json ./artifacts/accounts-manager/
 COPY scripts/package.json ./scripts/
 
-RUN pnpm install --frozen-lockfile
+RUN echo 'node-linker=hoisted' > .npmrc && pnpm install --frozen-lockfile
 
 # ─── Stage 2: Build ───────────────────────────────────────────────────────────
 FROM deps AS builder
