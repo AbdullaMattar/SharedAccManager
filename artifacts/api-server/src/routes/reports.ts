@@ -1,16 +1,62 @@
 import { Router, type IRouter } from "express";
 import { accountsTable, db, paymentsTable, productsTable, slotsTable, subscriptionsTable } from "@workspace/db";
-import { asc, eq, gte, sql } from "drizzle-orm";
+import { and, asc, eq, gte, lt, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/session";
 import { getSettings } from "../lib/settings";
 
 const router: IRouter = Router();
 
-router.get("/reports/revenue", requireAuth, async (_req, res): Promise<void> => {
-  const monthCondition = gte(sql`datetime(${paymentsTable.paidAt})`, sql`datetime('now', 'start of month')`);
-  const [total, byProduct, settings] = await Promise.all([
-    db.select({ revenue: sql<number>`coalesce(sum(${paymentsTable.amount}), 0)` })
-      .from(paymentsTable).where(monthCondition).get(),
+function resolveMonth(raw: unknown): string {
+  if (typeof raw === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(raw)) return raw;
+  return new Date().toISOString().slice(0, 7);
+}
+
+function monthBounds(yyyyMM: string) {
+  const [y, m] = yyyyMM.split("-").map(Number);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const start = `${y}-${pad(m)}-01 00:00:00`;
+  const ny = m === 12 ? y + 1 : y;
+  const nm = m === 12 ? 1 : m + 1;
+  const next = `${ny}-${pad(nm)}-01 00:00:00`;
+  const py = m === 1 ? y - 1 : y;
+  const pm = m === 1 ? 12 : m - 1;
+  const prev = `${py}-${pad(pm)}-01 00:00:00`;
+  return { start, next, prev };
+}
+
+function rangeWhere(start: string, end: string) {
+  return and(
+    gte(sql`datetime(${paymentsTable.paidAt})`, sql`datetime(${start})`),
+    lt(sql`datetime(${paymentsTable.paidAt})`, sql`datetime(${end})`)
+  );
+}
+
+function build12Months(selectedMonth: string): string[] {
+  const [y, m] = selectedMonth.split("-").map(Number);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const months: string[] = [];
+  for (let i = 11; i >= 0; i--) {
+    let mo = m - i;
+    let yr = y;
+    while (mo <= 0) { mo += 12; yr--; }
+    months.push(`${yr}-${pad(mo)}`);
+  }
+  return months;
+}
+
+router.get("/reports/revenue", requireAuth, async (req, res): Promise<void> => {
+  const selectedMonth = resolveMonth(req.query.month);
+  const { start, next, prev } = monthBounds(selectedMonth);
+
+  const months = build12Months(selectedMonth);
+  const trendStart = `${months[0]}-01 00:00:00`;
+
+  const [totalResult, byProduct, prevResult, trendRows, settings] = await Promise.all([
+    db.select({
+      revenue: sql<number>`coalesce(sum(${paymentsTable.amount}), 0)`,
+      paymentsCount: sql<number>`count(${paymentsTable.id})`,
+    }).from(paymentsTable).where(rangeWhere(start, next)).get(),
+
     db.select({
       productId: productsTable.id,
       productName: productsTable.name,
@@ -22,12 +68,42 @@ router.get("/reports/revenue", requireAuth, async (_req, res): Promise<void> => 
       .innerJoin(slotsTable, eq(subscriptionsTable.slotId, slotsTable.id))
       .innerJoin(accountsTable, eq(slotsTable.accountId, accountsTable.id))
       .innerJoin(productsTable, eq(accountsTable.productId, productsTable.id))
-      .where(monthCondition)
+      .where(rangeWhere(start, next))
       .groupBy(productsTable.id)
       .orderBy(asc(productsTable.name)),
+
+    db.select({ revenue: sql<number>`coalesce(sum(${paymentsTable.amount}), 0)` })
+      .from(paymentsTable).where(rangeWhere(prev, start)).get(),
+
+    db.select({
+      month: sql<string>`strftime('%Y-%m', ${paymentsTable.paidAt})`,
+      revenue: sql<number>`coalesce(sum(${paymentsTable.amount}), 0)`,
+    })
+      .from(paymentsTable)
+      .where(rangeWhere(trendStart, next))
+      .groupBy(sql`strftime('%Y-%m', ${paymentsTable.paidAt})`),
+
     getSettings(),
   ]);
-  res.json({ month: new Date().toISOString().slice(0, 7), revenue: total?.revenue ?? 0, byProduct, currency: settings.currency });
+
+  const revenue = totalResult?.revenue ?? 0;
+  const paymentsCount = totalResult?.paymentsCount ?? 0;
+  const avgPayment = paymentsCount > 0 ? revenue / paymentsCount : 0;
+  const prevMonthRevenue = prevResult?.revenue ?? 0;
+
+  const trendMap = new Map(trendRows.map((r) => [r.month, r.revenue]));
+  const monthly = months.map((mo) => ({ month: mo, revenue: trendMap.get(mo) ?? 0 }));
+
+  res.json({
+    month: selectedMonth,
+    currency: settings.currency,
+    revenue,
+    paymentsCount,
+    avgPayment,
+    prevMonthRevenue,
+    byProduct,
+    monthly,
+  });
 });
 
 export default router;
