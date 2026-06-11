@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useLogout } from "@workspace/api-client-react";
 import { strings } from "@/lib/strings";
-import { Package, LogOut, Menu, UserRound, ReceiptText, ShoppingCart, LayoutDashboard, CalendarClock, Settings, ShieldCheck, BarChart3, Loader2 } from "lucide-react";
+import { Package, LogOut, Menu, UserRound, ReceiptText, ShoppingCart, LayoutDashboard, CalendarClock, Settings, ShieldCheck, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -35,7 +35,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/inventory", label: strings.nav.inventory, icon: Package },
     { href: "/customers", label: strings.nav.customers, icon: UserRound },
     { href: "/subscriptions", label: strings.nav.subscriptions, icon: ReceiptText },
-    { href: "/reports/revenue", label: strings.phase3.report, icon: BarChart3 },
     ...(user?.role === "admin" ? [
       { href: "/admin/settings", label: strings.phase3.settings, icon: Settings },
       { href: "/admin/users", label: strings.phase3.users, icon: ShieldCheck },

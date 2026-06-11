@@ -17,7 +17,6 @@ import Expiring from "@/pages/expiring";
 import Settings from "@/pages/settings";
 import Users from "@/pages/users";
 import Audit from "@/pages/audit";
-import RevenueReport from "@/pages/revenue-report";
 import { AdminGuard } from "@/components/admin-guard";
 
 const queryClient = new QueryClient();
@@ -56,7 +55,6 @@ function Router() {
       <Route path="/subscriptions"><AuthGuard><Subscriptions /></AuthGuard></Route>
       <Route path="/sale/new"><AuthGuard><NewSale /></AuthGuard></Route>
       <Route path="/expiring"><AuthGuard><Expiring /></AuthGuard></Route>
-      <Route path="/reports/revenue"><AuthGuard><RevenueReport /></AuthGuard></Route>
       <Route path="/admin/settings"><AuthGuard><AdminGuard><Settings /></AdminGuard></AuthGuard></Route>
       <Route path="/admin/users"><AuthGuard><AdminGuard><Users /></AdminGuard></AuthGuard></Route>
       <Route path="/admin/audit"><AuthGuard><AdminGuard><Audit /></AdminGuard></AuthGuard></Route>
