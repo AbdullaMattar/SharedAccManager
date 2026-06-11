@@ -18,7 +18,16 @@ export type DashboardData = { expiringCounts: { oneDay: number; threeDays: numbe
 export type Settings = { reminderLeadDays: number; reminderRecipient: "staff" | "customer" | "both"; graceDays: number; businessName: string; currency: string };
 export type AdminUser = { id: number; name: string; email: string; role: "admin" | "staff"; enabled: boolean };
 export type AuditEntry = { id: number; userName?: string | null; action: string; entityType: string; entityId?: number | null; createdAt: string };
-export type RevenueReport = { total: number; currency?: string; products: { productId: number; productName: string; revenue: number; paymentsCount?: number }[] };
+export type RevenueReport = {
+  month: string;
+  total: number;
+  currency?: string;
+  paymentsCount: number;
+  avgPayment: number;
+  prevMonthRevenue: number;
+  monthly: { month: string; revenue: number }[];
+  products: { productId: number; productName: string; revenue: number; paymentsCount?: number }[];
+};
 
 type RawSubscription = { id: number; customerName: string; customerPhone: string; customerWhatsapp?: string | null; productName: string; accountLabel: string; expiryDate: string; price: number; productDefaultDurationDays: number };
 const normalizeSubscription = (item: RawSubscription): ExpiringSubscription => ({
@@ -44,4 +53,19 @@ export const useUpdateUser = () => useMutation({ mutationFn: async ({ id, data }
 } });
 export const useResetUserPassword = () => useMutation({ mutationFn: ({ id, password }: { id: number; password: string }) => request(`/api/users/${id}/reset-password`, { method: "POST", body: JSON.stringify({ password }) }) });
 export const useListAdminAuditLog = (action?: string, offset?: number) => useQuery({ queryKey: ["phase3", "audit", action, offset], queryFn: async () => (await request<any[]>(`/api/stats/audit-log${query({ action, offset })}`)).map((item) => ({ ...item, entityType: item.entity })) as AuditEntry[] });
-export const useGetRevenueReport = () => useQuery({ queryKey: ["phase3", "revenue"], queryFn: async () => { const raw = await request<any>("/api/reports/revenue"); return { total: raw.revenue, products: raw.byProduct, currency: raw.currency } as RevenueReport; } });
+export const useGetRevenueReport = (month?: string) => useQuery({
+  queryKey: ["phase3", "revenue", month],
+  queryFn: async () => {
+    const raw = await request<any>(`/api/reports/revenue${query({ month })}`);
+    return {
+      month: raw.month,
+      total: raw.revenue,
+      currency: raw.currency,
+      paymentsCount: raw.paymentsCount ?? 0,
+      avgPayment: raw.avgPayment ?? 0,
+      prevMonthRevenue: raw.prevMonthRevenue ?? 0,
+      monthly: raw.monthly ?? [],
+      products: raw.byProduct,
+    } as RevenueReport;
+  },
+});
