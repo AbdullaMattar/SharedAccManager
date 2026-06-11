@@ -86,5 +86,10 @@ export const strings = {
     roleAdmin: "مدير", roleStaff: "موظف", enabled: "مفعل", disabled: "معطل", userSaved: "تم حفظ المستخدم", passwordReset: "تم تحديث كلمة المرور", audit: "سجل التدقيق",
     who: "المستخدم", action: "الإجراء", entity: "العنصر", when: "الوقت", allActions: "كل الإجراءات", report: "تقرير الإيرادات", revenueByProduct: "الإيرادات حسب المنتج", refunded: "مسترجع",
     paymentsCount: "عدد الدفعات", adminOnly: "هذه الصفحة متاحة للمدير فقط", loading: "جارٍ التحميل...", save: "حفظ", close: "إغلاق", notes: "ملاحظات",
+    revenueTrend: "اتجاه الإيرادات الشهرية",
+    selectMonth: "اختر الشهر",
+    averagePayment: "متوسط الدفعة",
+    changeVsPrevMonth: "التغيير مقارنة بالشهر السابق",
+    monthNames: ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"] as const,
   },
 };
