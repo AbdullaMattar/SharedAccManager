@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, accountsTable, productsTable, slotsTable, auditLogTable } from "@workspace/db";
+import { db, accountsTable, productsTable, slotsTable, subscriptionsTable, auditLogTable } from "@workspace/db";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import { requireAuth } from "../lib/session";
 import { encrypt, decrypt } from "../lib/crypto";
@@ -15,6 +15,10 @@ import {
 
 const router: IRouter = Router();
 
+function toDateText(value: Date | string): string {
+  return value instanceof Date ? value.toISOString().slice(0, 10) : value;
+}
+
 async function buildAccountWithSlots(accountId: number) {
   const [account] = await db
     .select({
@@ -25,6 +29,8 @@ async function buildAccountWithSlots(accountId: number) {
       email: accountsTable.email,
       capacity: accountsTable.capacity,
       status: accountsTable.status,
+      startDate: accountsTable.startDate,
+      expiryDate: accountsTable.expiryDate,
       notes: accountsTable.notes,
       createdAt: accountsTable.createdAt,
     })
@@ -58,6 +64,8 @@ router.get("/accounts", requireAuth, async (req, res): Promise<void> => {
       email: accountsTable.email,
       capacity: accountsTable.capacity,
       status: accountsTable.status,
+      startDate: accountsTable.startDate,
+      expiryDate: accountsTable.expiryDate,
       notes: accountsTable.notes,
       createdAt: accountsTable.createdAt,
     })
@@ -102,12 +110,18 @@ router.post("/accounts", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const { password, ...rest } = parsed.data;
+  const { password, startDate, expiryDate, ...rest } = parsed.data;
+  const accountStartDate = toDateText(startDate);
+  const accountExpiryDate = toDateText(expiryDate);
+  if (accountExpiryDate < accountStartDate) {
+    res.status(400).json({ error: "تاريخ انتهاء الحساب يجب أن يكون بعد تاريخ البداية" });
+    return;
+  }
   const passwordEncrypted = encrypt(password);
 
   const [account] = await db
     .insert(accountsTable)
-    .values({ ...rest, passwordEncrypted })
+    .values({ ...rest, startDate: accountStartDate, expiryDate: accountExpiryDate, passwordEncrypted })
     .returning();
 
   // Auto-create capacity slots
@@ -158,8 +172,17 @@ router.patch("/accounts/:id", requireAuth, async (req, res): Promise<void> => {
   if (parsed.data.label != null) updateData.label = parsed.data.label;
   if (parsed.data.email != null) updateData.email = parsed.data.email;
   if (parsed.data.status != null) updateData.status = parsed.data.status;
+  if (parsed.data.startDate != null) updateData.startDate = toDateText(parsed.data.startDate);
+  if (parsed.data.expiryDate != null) updateData.expiryDate = toDateText(parsed.data.expiryDate);
   if (parsed.data.notes !== undefined) updateData.notes = parsed.data.notes;
   if (parsed.data.password) updateData.passwordEncrypted = encrypt(parsed.data.password);
+
+  const nextStartDate = parsed.data.startDate != null ? toDateText(parsed.data.startDate) : existing.startDate;
+  const nextExpiryDate = parsed.data.expiryDate != null ? toDateText(parsed.data.expiryDate) : existing.expiryDate;
+  if (nextExpiryDate < nextStartDate) {
+    res.status(400).json({ error: "تاريخ انتهاء الحساب يجب أن يكون بعد تاريخ البداية" });
+    return;
+  }
 
   // Handle capacity change — reconcile slots
   if (parsed.data.capacity != null && parsed.data.capacity !== existing.capacity) {
@@ -201,6 +224,21 @@ router.patch("/accounts/:id", requireAuth, async (req, res): Promise<void> => {
   }
 
   await db.update(accountsTable).set(updateData).where(eq(accountsTable.id, params.data.id));
+  if (parsed.data.startDate != null || parsed.data.expiryDate != null) {
+    const accountSlots = await db
+      .select({ id: slotsTable.id })
+      .from(slotsTable)
+      .where(eq(slotsTable.accountId, params.data.id));
+    if (accountSlots.length) {
+      await db
+        .update(subscriptionsTable)
+        .set({ startDate: nextStartDate, expiryDate: nextExpiryDate })
+        .where(and(
+          inArray(subscriptionsTable.slotId, accountSlots.map((slot) => slot.id)),
+          eq(subscriptionsTable.status, "active"),
+        ));
+    }
+  }
   const result = await buildAccountWithSlots(params.data.id);
   res.json(result);
 });

@@ -1,7 +1,6 @@
 import { z } from "zod/v4";
 
 const nullableText = z.string().trim().nullable().optional();
-const dateText = z.string().date();
 const dateTimeText = z.string().datetime({ offset: true });
 
 export const idParamsSchema = z.object({
@@ -34,8 +33,6 @@ export const saleInputSchema = z
     productId: z.number().int().positive(),
     slotId: z.number().int().positive().optional(),
     customerId: z.number().int().positive(),
-    startDate: dateText,
-    expiryDate: dateText,
     price: z.number().nonnegative("السعر يجب ألا يكون سالباً"),
     notes: nullableText,
     payment: z.object({
@@ -44,10 +41,6 @@ export const saleInputSchema = z
       paidAt: dateTimeText,
       notes: nullableText,
     }),
-  })
-  .refine((value) => value.expiryDate >= value.startDate, {
-    message: "تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية أو مساوياً له",
-    path: ["expiryDate"],
   });
 
 export const listSubscriptionsQuerySchema = z.object({

@@ -8,4 +8,5 @@
 
 export type ListAuditLogParams = {
 limit?: number;
+action?: string;
 };

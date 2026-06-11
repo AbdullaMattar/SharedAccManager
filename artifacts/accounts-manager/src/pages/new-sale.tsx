@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { Check, CheckCircle2, Loader2, Plus, Search, ShoppingCart } from "lucide-react";
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,6 @@ import {
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
-const todayStr = () => format(new Date(), "yyyy-MM-dd");
 const nowDt = () => format(new Date(), "yyyy-MM-dd'T'HH:mm");
 
 export default function NewSale() {
@@ -52,9 +51,6 @@ export default function NewSale() {
   }, [slots]);
 
   // Step 4 — Dates & price
-  const [startDate, setStartDate] = useState(todayStr());
-  const [expiryDate, setExpiryDate] = useState(todayStr());
-  const [expiryEdited, setExpiryEdited] = useState(false);
   const [price, setPrice] = useState(0);
   const [amount, setAmount] = useState(0);
   const [method, setMethod] = useState<"cash" | "transfer" | "other">("cash");
@@ -71,29 +67,9 @@ export default function NewSale() {
     if (!product) return;
     setPrice(product.defaultPrice);
     setAmount(product.defaultPrice);
-    if (!expiryEdited) {
-      setExpiryDate(
-        format(
-          addDays(new Date(`${startDate}T00:00:00`), product.defaultDurationDays),
-          "yyyy-MM-dd",
-        ),
-      );
-    }
     setSelectedSlot(undefined);
     setSlotAssignment("auto");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.id]);
-
-  // Recalculate expiry when startDate changes (unless user manually edited expiry)
-  useEffect(() => {
-    if (!product || expiryEdited) return;
-    setExpiryDate(
-      format(
-        addDays(new Date(`${startDate}T00:00:00`), product.defaultDurationDays),
-        "yyyy-MM-dd",
-      ),
-    );
-  }, [startDate, product, expiryEdited]);
 
   const advance = () => {
     const next = step + 1;
@@ -128,8 +104,6 @@ export default function NewSale() {
           productId: product.id,
           slotId: slotAssignment === "manual" ? selectedSlot?.id : undefined,
           customerId: customer.id,
-          startDate,
-          expiryDate,
           price,
           notes: notes.trim() || undefined,
           payment: {
@@ -203,7 +177,7 @@ export default function NewSale() {
           )}
           {step === 5 && (
             <SummaryChip
-              label={`${startDate} ← ${expiryDate} · ${price}`}
+              label={`${strings.subscriptions.price}: ${price}`}
               onClick={() => goBack(4)}
             />
           )}
@@ -402,23 +376,10 @@ export default function NewSale() {
             <CardTitle>{strings.sale.datesStep}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
+              {strings.sale.accountDatesHint}
+            </p>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="space-y-2">
-                <Label>{strings.subscriptions.startDate}</Label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{strings.subscriptions.expiryDate}</Label>
-                <Input
-                  type="date"
-                  value={expiryDate}
-                  onChange={(e) => { setExpiryDate(e.target.value); setExpiryEdited(true); }}
-                />
-              </div>
               <div className="space-y-2">
                 <Label>{strings.subscriptions.price}</Label>
                 <Input
@@ -483,13 +444,8 @@ export default function NewSale() {
               />
             </div>
 
-            {expiryDate < startDate && (
-              <p className="text-sm text-destructive">{strings.sale.invalidDates}</p>
-            )}
-
             <Button
               className="w-full"
-              disabled={expiryDate < startDate}
               onClick={advance}
             >
               التالي
@@ -516,8 +472,6 @@ export default function NewSale() {
                     : `${selectedSlot?.accountLabel} · مقعد ${selectedSlot?.slotIndex}`
                 }
               />
-              <ConfirmRow label={strings.subscriptions.startDate} value={startDate} />
-              <ConfirmRow label={strings.subscriptions.expiryDate} value={expiryDate} />
               <ConfirmRow label={strings.subscriptions.price} value={String(price)} />
               <ConfirmRow label={strings.sale.paymentAmount} value={String(amount)} />
               <ConfirmRow

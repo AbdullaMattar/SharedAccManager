@@ -159,6 +159,17 @@ export default function Accounts() {
                   </div>
                   {renderSlots(account.capacity, account.occupiedSlots)}
                 </div>
+
+                <div className="grid grid-cols-2 gap-2 border-t border-border pt-3 text-xs">
+                  <div>
+                    <span className="block text-muted-foreground">{strings.accounts.startDate}</span>
+                    <strong>{account.startDate}</strong>
+                  </div>
+                  <div>
+                    <span className="block text-muted-foreground">{strings.accounts.expiryDate}</span>
+                    <strong>{account.expiryDate}</strong>
+                  </div>
+                </div>
                 
                 {account.notes && (
                   <p className="pt-3 border-t border-border text-xs text-muted-foreground line-clamp-2">

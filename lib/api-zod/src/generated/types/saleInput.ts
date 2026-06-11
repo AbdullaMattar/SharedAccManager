@@ -12,8 +12,6 @@ export interface SaleInput {
   /** Omit to auto-assign the first free slot in the oldest active account. */
   slotId?: number;
   customerId: number;
-  startDate: Date;
-  expiryDate: Date;
   /** @minimum 0 */
   price: number;
   /** @nullable */

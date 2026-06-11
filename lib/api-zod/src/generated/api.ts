@@ -28,7 +28,8 @@ export const LoginResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "email": zod.string(),
-  "role": zod.string()
+  "role": zod.string(),
+  "disabled": zod.boolean().optional()
 })
 
 
@@ -47,7 +48,8 @@ export const GetMeResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "email": zod.string(),
-  "role": zod.string()
+  "role": zod.string(),
+  "disabled": zod.boolean().optional()
 })
 
 
@@ -167,6 +169,8 @@ export const ListAccountsResponseItem = zod.object({
   "email": zod.string(),
   "capacity": zod.number(),
   "status": zod.enum(['active', 'disabled', 'needs_attention']),
+  "startDate": zod.coerce.date(),
+  "expiryDate": zod.coerce.date(),
   "notes": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "slots": zod.array(zod.object({
@@ -196,6 +200,8 @@ export const CreateAccountBody = zod.object({
   "password": zod.string().min(1),
   "capacity": zod.number().min(1),
   "status": zod.enum(['active', 'disabled', 'needs_attention']),
+  "startDate": zod.coerce.date(),
+  "expiryDate": zod.coerce.date(),
   "notes": zod.string().optional()
 })
 
@@ -215,6 +221,8 @@ export const GetAccountResponse = zod.object({
   "email": zod.string(),
   "capacity": zod.number(),
   "status": zod.enum(['active', 'disabled', 'needs_attention']),
+  "startDate": zod.coerce.date(),
+  "expiryDate": zod.coerce.date(),
   "notes": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "slots": zod.array(zod.object({
@@ -245,6 +253,8 @@ export const UpdateAccountBody = zod.object({
   "password": zod.string().optional(),
   "capacity": zod.number().min(1).optional(),
   "status": zod.enum(['active', 'disabled', 'needs_attention']).optional(),
+  "startDate": zod.coerce.date().optional(),
+  "expiryDate": zod.coerce.date().optional(),
   "notes": zod.string().nullish()
 })
 
@@ -256,6 +266,8 @@ export const UpdateAccountResponse = zod.object({
   "email": zod.string(),
   "capacity": zod.number(),
   "status": zod.enum(['active', 'disabled', 'needs_attention']),
+  "startDate": zod.coerce.date(),
+  "expiryDate": zod.coerce.date(),
   "notes": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "slots": zod.array(zod.object({
@@ -326,7 +338,8 @@ export const GetInventoryStatsResponse = zod.object({
  * @summary Recent audit log entries
  */
 export const ListAuditLogQueryParams = zod.object({
-  "limit": zod.coerce.number().optional()
+  "limit": zod.coerce.number().optional(),
+  "action": zod.coerce.string().optional()
 })
 
 export const ListAuditLogResponseItem = zod.object({
@@ -488,8 +501,6 @@ export const CreateSaleBody = zod.object({
   "productId": zod.number(),
   "slotId": zod.number().optional().describe('Omit to auto-assign the first free slot in the oldest active account.'),
   "customerId": zod.number(),
-  "startDate": zod.coerce.date(),
-  "expiryDate": zod.coerce.date(),
   "price": zod.number().min(createSaleBodyPriceMin),
   "notes": zod.string().nullish(),
   "payment": zod.object({
@@ -624,6 +635,193 @@ export const CancelSubscriptionResponse = zod.object({
   "status": zod.enum(['active', 'expired', 'cancelled']),
   "notes": zod.string().nullish(),
   "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Atomically renew into a new subscription with full payment
+ */
+export const RenewSubscriptionParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+export const renewSubscriptionBodyPriceMin = 0;
+
+
+
+export const RenewSubscriptionBody = zod.object({
+  "durationDays": zod.number().min(1),
+  "price": zod.number().min(renewSubscriptionBodyPriceMin),
+  "paymentMethod": zod.enum(['cash', 'transfer', 'other']),
+  "paidAt": zod.coerce.date(),
+  "notes": zod.string().nullish()
+})
+
+
+/**
+ * @summary Get expiry, inventory, and monthly revenue dashboard
+ */
+export const GetDashboardResponse = zod.record(zod.string(), zod.unknown())
+
+
+/**
+ * @summary List active subscriptions expiring within the live reminder window
+ */
+export const listExpiringSubscriptionsQueryDaysMin = 0;
+export const listExpiringSubscriptionsQueryDaysMax = 365;
+
+
+
+export const ListExpiringSubscriptionsQueryParams = zod.object({
+  "days": zod.coerce.number().min(listExpiringSubscriptionsQueryDaysMin).max(listExpiringSubscriptionsQueryDaysMax).optional()
+})
+
+export const ListExpiringSubscriptionsResponse = zod.object({
+  "days": zod.number(),
+  "reminderRecipient": zod.enum(['staff', 'customer', 'both']),
+  "subscriptions": zod.array(zod.object({
+  "id": zod.number(),
+  "customerId": zod.number(),
+  "customerName": zod.string(),
+  "slotId": zod.number(),
+  "slotIndex": zod.number(),
+  "accountId": zod.number(),
+  "accountLabel": zod.string(),
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "startDate": zod.coerce.date(),
+  "expiryDate": zod.coerce.date(),
+  "price": zod.number(),
+  "status": zod.enum(['active', 'expired', 'cancelled']),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Get live settings (admin only)
+ */
+export const GetSettingsResponse = zod.object({
+  "reminderLeadDays": zod.number(),
+  "reminderRecipient": zod.enum(['staff', 'customer', 'both']),
+  "graceDays": zod.number(),
+  "businessName": zod.string(),
+  "currency": zod.string()
+})
+
+
+/**
+ * @summary Update live settings (admin only)
+ */
+
+export const updateSettingsBodyGraceDaysMin = 0;
+
+
+
+export const UpdateSettingsBody = zod.object({
+  "reminder_lead_days": zod.number().min(1).optional(),
+  "reminder_recipient": zod.enum(['staff', 'customer', 'both']).optional(),
+  "grace_days": zod.number().min(updateSettingsBodyGraceDaysMin).optional(),
+  "business_name": zod.string().optional(),
+  "currency": zod.string().optional()
+})
+
+export const UpdateSettingsResponse = zod.object({
+  "reminderLeadDays": zod.number(),
+  "reminderRecipient": zod.enum(['staff', 'customer', 'both']),
+  "graceDays": zod.number(),
+  "businessName": zod.string(),
+  "currency": zod.string()
+})
+
+
+/**
+ * @summary List users (admin only)
+ */
+export const ListUsersResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string().email(),
+  "role": zod.enum(['admin', 'staff']),
+  "disabled": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+export const ListUsersResponse = zod.array(ListUsersResponseItem)
+
+
+/**
+ * @summary Create user (admin only)
+ */
+export const createUserBodyPasswordMin = 8;
+
+
+
+export const CreateUserBody = zod.object({
+  "name": zod.string(),
+  "email": zod.string().email(),
+  "password": zod.string().min(createUserBodyPasswordMin),
+  "role": zod.enum(['admin', 'staff']).optional()
+})
+
+
+/**
+ * @summary Edit or disable user (admin only)
+ */
+export const UpdateUserParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateUserBody = zod.object({
+  "name": zod.string().optional(),
+  "email": zod.string().email().optional(),
+  "role": zod.enum(['admin', 'staff']).optional(),
+  "disabled": zod.boolean().optional()
+})
+
+export const UpdateUserResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string().email(),
+  "role": zod.enum(['admin', 'staff']),
+  "disabled": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Reset user password (admin only)
+ */
+export const ResetUserPasswordParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const resetUserPasswordBodyPasswordMin = 8;
+
+
+
+export const ResetUserPasswordBody = zod.object({
+  "password": zod.string().min(resetUserPasswordBodyPasswordMin)
+})
+
+export const ResetUserPasswordResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Get current-month revenue and product breakdown
+ */
+export const GetRevenueReportResponse = zod.object({
+  "month": zod.string(),
+  "revenue": zod.number(),
+  "currency": zod.string(),
+  "byProduct": zod.array(zod.object({
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "revenue": zod.number()
+}))
 })
 
 

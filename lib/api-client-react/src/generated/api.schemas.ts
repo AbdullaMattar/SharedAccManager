@@ -27,6 +27,7 @@ export interface AuthUser {
   name: string;
   email: string;
   role: string;
+  disabled?: boolean;
 }
 
 export interface Product {
@@ -86,6 +87,8 @@ export interface Account {
   email: string;
   capacity: number;
   status: AccountStatus;
+  startDate: string;
+  expiryDate: string;
   /** @nullable */
   notes?: string | null;
   createdAt: string;
@@ -124,6 +127,8 @@ export interface AccountWithSlots {
   email: string;
   capacity: number;
   status: AccountWithSlotsStatus;
+  startDate: string;
+  expiryDate: string;
   /** @nullable */
   notes?: string | null;
   createdAt: string;
@@ -151,6 +156,8 @@ export interface AccountInput {
   /** @minimum 1 */
   capacity: number;
   status: AccountInputStatus;
+  startDate: string;
+  expiryDate: string;
   notes?: string;
 }
 
@@ -171,6 +178,8 @@ export interface AccountUpdate {
   /** @minimum 1 */
   capacity?: number;
   status?: AccountUpdateStatus;
+  startDate?: string;
+  expiryDate?: string;
   /** @nullable */
   notes?: string | null;
 }
@@ -373,8 +382,6 @@ export interface SaleInput {
   /** Omit to auto-assign the first free slot in the oldest active account. */
   slotId?: number;
   customerId: number;
-  startDate: string;
-  expiryDate: string;
   /** @minimum 0 */
   price: number;
   /** @nullable */
@@ -388,6 +395,151 @@ export interface SaleResult {
   slot: FreeSlot;
 }
 
+export type RenewalInputPaymentMethod = typeof RenewalInputPaymentMethod[keyof typeof RenewalInputPaymentMethod];
+
+
+export const RenewalInputPaymentMethod = {
+  cash: 'cash',
+  transfer: 'transfer',
+  other: 'other',
+} as const;
+
+export interface RenewalInput {
+  /** @minimum 1 */
+  durationDays: number;
+  /** @minimum 0 */
+  price: number;
+  paymentMethod: RenewalInputPaymentMethod;
+  paidAt: string;
+  /** @nullable */
+  notes?: string | null;
+}
+
+export interface RenewalResult {
+  subscription: Subscription;
+  payment: Payment;
+  previousSubscriptionId: number;
+}
+
+export type SettingsReminderRecipient = typeof SettingsReminderRecipient[keyof typeof SettingsReminderRecipient];
+
+
+export const SettingsReminderRecipient = {
+  staff: 'staff',
+  customer: 'customer',
+  both: 'both',
+} as const;
+
+export interface Settings {
+  reminderLeadDays: number;
+  reminderRecipient: SettingsReminderRecipient;
+  graceDays: number;
+  businessName: string;
+  currency: string;
+}
+
+export type SettingsUpdateReminderRecipient = typeof SettingsUpdateReminderRecipient[keyof typeof SettingsUpdateReminderRecipient];
+
+
+export const SettingsUpdateReminderRecipient = {
+  staff: 'staff',
+  customer: 'customer',
+  both: 'both',
+} as const;
+
+export interface SettingsUpdate {
+  /** @minimum 1 */
+  reminder_lead_days?: number;
+  reminder_recipient?: SettingsUpdateReminderRecipient;
+  /** @minimum 0 */
+  grace_days?: number;
+  business_name?: string;
+  currency?: string;
+}
+
+export type ManagedUserRole = typeof ManagedUserRole[keyof typeof ManagedUserRole];
+
+
+export const ManagedUserRole = {
+  admin: 'admin',
+  staff: 'staff',
+} as const;
+
+export interface ManagedUser {
+  id: number;
+  name: string;
+  email: string;
+  role: ManagedUserRole;
+  disabled: boolean;
+  createdAt: string;
+}
+
+export type UserCreateInputRole = typeof UserCreateInputRole[keyof typeof UserCreateInputRole];
+
+
+export const UserCreateInputRole = {
+  admin: 'admin',
+  staff: 'staff',
+} as const;
+
+export interface UserCreateInput {
+  name: string;
+  email: string;
+  /** @minLength 8 */
+  password: string;
+  role?: UserCreateInputRole;
+}
+
+export type UserUpdateInputRole = typeof UserUpdateInputRole[keyof typeof UserUpdateInputRole];
+
+
+export const UserUpdateInputRole = {
+  admin: 'admin',
+  staff: 'staff',
+} as const;
+
+export interface UserUpdateInput {
+  name?: string;
+  email?: string;
+  role?: UserUpdateInputRole;
+  disabled?: boolean;
+}
+
+export interface PasswordResetInput {
+  /** @minLength 8 */
+  password: string;
+}
+
+export type ExpiringResultReminderRecipient = typeof ExpiringResultReminderRecipient[keyof typeof ExpiringResultReminderRecipient];
+
+
+export const ExpiringResultReminderRecipient = {
+  staff: 'staff',
+  customer: 'customer',
+  both: 'both',
+} as const;
+
+export interface ExpiringResult {
+  days: number;
+  reminderRecipient: ExpiringResultReminderRecipient;
+  subscriptions: SubscriptionSummary[];
+}
+
+export interface Dashboard { [key: string]: unknown }
+
+export type RevenueReportByProductItem = {
+  productId: number;
+  productName: string;
+  revenue: number;
+};
+
+export interface RevenueReport {
+  month: string;
+  revenue: number;
+  currency: string;
+  byProduct: RevenueReportByProductItem[];
+}
+
 export type ListAccountsParams = {
 productId?: number;
 status?: string;
@@ -395,6 +547,7 @@ status?: string;
 
 export type ListAuditLogParams = {
 limit?: number;
+action?: string;
 };
 
 export type ListCustomersParams = {
@@ -404,5 +557,13 @@ q?: string;
 export type ListSubscriptionsParams = {
 status?: SubscriptionStatus;
 customerId?: number;
+};
+
+export type ListExpiringSubscriptionsParams = {
+/**
+ * @minimum 0
+ * @maximum 365
+ */
+days?: number;
 };
 

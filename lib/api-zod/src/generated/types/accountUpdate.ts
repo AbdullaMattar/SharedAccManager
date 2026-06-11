@@ -15,6 +15,8 @@ export interface AccountUpdate {
   /** @minimum 1 */
   capacity?: number;
   status?: AccountUpdateStatus;
+  startDate?: Date;
+  expiryDate?: Date;
   /** @nullable */
   notes?: string | null;
 }

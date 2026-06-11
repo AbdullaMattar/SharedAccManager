@@ -14,6 +14,8 @@ export interface Account {
   email: string;
   capacity: number;
   status: AccountStatus;
+  startDate: Date;
+  expiryDate: Date;
   /** @nullable */
   notes?: string | null;
   createdAt: Date;

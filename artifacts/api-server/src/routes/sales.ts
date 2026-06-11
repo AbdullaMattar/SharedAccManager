@@ -11,7 +11,7 @@ import {
   saleInputSchema,
   validationError,
 } from "@workspace/db";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, gte, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/session";
 import { getRequestUser } from "../lib/request-user";
 
@@ -44,6 +44,7 @@ router.get(
         and(
           eq(accountsTable.productId, productsTable.id),
           eq(accountsTable.status, "active"),
+          gte(sql`date(${accountsTable.expiryDate})`, sql`date('now')`),
         ),
       )
       .innerJoin(
@@ -69,7 +70,11 @@ router.get(
       .innerJoin(accountsTable, eq(slotsTable.accountId, accountsTable.id))
       .innerJoin(productsTable, eq(accountsTable.productId, productsTable.id))
       .where(
-        and(eq(slotsTable.status, "free"), eq(accountsTable.status, "active")),
+        and(
+          eq(slotsTable.status, "free"),
+          eq(accountsTable.status, "active"),
+          gte(sql`date(${accountsTable.expiryDate})`, sql`date('now')`),
+        ),
       )
       .orderBy(asc(accountsTable.createdAt), asc(slotsTable.slotIndex));
 
@@ -116,6 +121,8 @@ router.post("/sales", requireAuth, async (req, res): Promise<void> => {
           slotIndex: slotsTable.slotIndex,
           accountId: accountsTable.id,
           accountLabel: accountsTable.label,
+          accountStartDate: accountsTable.startDate,
+          accountExpiryDate: accountsTable.expiryDate,
         })
         .from(slotsTable)
         .innerJoin(accountsTable, eq(slotsTable.accountId, accountsTable.id))
@@ -124,6 +131,7 @@ router.post("/sales", requireAuth, async (req, res): Promise<void> => {
             slotCondition,
             eq(slotsTable.status, "free"),
             eq(accountsTable.status, "active"),
+            gte(sql`date(${accountsTable.expiryDate})`, sql`date('now')`),
           ),
         )
         .orderBy(asc(accountsTable.createdAt), asc(slotsTable.slotIndex))
@@ -144,8 +152,8 @@ router.post("/sales", requireAuth, async (req, res): Promise<void> => {
         .values({
           slotId: slot.id,
           customerId: customer.id,
-          startDate: input.startDate,
-          expiryDate: input.expiryDate,
+          startDate: slot.accountStartDate,
+          expiryDate: slot.accountExpiryDate,
           price: input.price,
           status: "active",
           notes: input.notes,

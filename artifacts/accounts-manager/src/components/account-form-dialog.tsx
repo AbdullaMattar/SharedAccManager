@@ -13,15 +13,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { strings } from "@/lib/strings";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { addDays, format } from "date-fns";
+
+const today = () => format(new Date(), "yyyy-MM-dd");
 
 const accountSchema = z.object({
   productId: z.coerce.number().min(1, { message: "مطلوب" }),
   label: z.string().min(1, { message: "مطلوب" }),
   email: z.string().min(1, { message: "مطلوب" }).email({ message: "بريد إلكتروني غير صالح" }),
-  password: z.string().min(1, { message: "مطلوب" }),
+  password: z.string().optional(),
   capacity: z.coerce.number().min(1, { message: "مطلوب" }),
   status: z.enum(["active", "disabled", "needs_attention"]),
+  startDate: z.string().min(1, { message: "مطلوب" }),
+  expiryDate: z.string().min(1, { message: "مطلوب" }),
   notes: z.string().optional(),
+}).refine((value) => value.expiryDate >= value.startDate, {
+  message: "تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية",
+  path: ["expiryDate"],
 });
 
 type AccountFormValues = z.infer<typeof accountSchema>;
@@ -47,6 +55,8 @@ export function AccountFormDialog({ open, onOpenChange, account, products }: Acc
       password: "", // Password is required on create, optionally provided on update (but we keep it simple here by making it required or we adjust schema for edit)
       capacity: account?.capacity || (products[0]?.defaultCapacity || 1),
       status: account?.status || "active",
+      startDate: account?.startDate || today(),
+      expiryDate: account?.expiryDate || format(addDays(new Date(), products[0]?.defaultDurationDays || 30), "yyyy-MM-dd"),
       notes: account?.notes || "",
     },
   });
@@ -59,12 +69,18 @@ export function AccountFormDialog({ open, onOpenChange, account, products }: Acc
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const onSubmit = (data: AccountFormValues) => {
+    if (!isEditing && !data.password) {
+      form.setError("password", { message: strings.common.required });
+      return;
+    }
     if (isEditing && account) {
       const updateData: AccountUpdate = {
         label: data.label,
         email: data.email,
         capacity: data.capacity,
         status: data.status,
+        startDate: data.startDate,
+        expiryDate: data.expiryDate,
         notes: data.notes,
       };
       if (data.password) {
@@ -100,6 +116,7 @@ export function AccountFormDialog({ open, onOpenChange, account, products }: Acc
     const product = products.find(p => p.id === pId);
     if (product && !isEditing) {
       form.setValue("capacity", product.defaultCapacity);
+      form.setValue("expiryDate", format(addDays(new Date(`${form.getValues("startDate")}T00:00:00`), product.defaultDurationDays), "yyyy-MM-dd"));
     }
     form.setValue("productId", pId);
   };
@@ -216,6 +233,35 @@ export function AccountFormDialog({ open, onOpenChange, account, products }: Acc
                         <SelectItem value="needs_attention">{strings.accounts.statusNeedsAttention}</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{strings.accounts.startDate}</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} data-testid="input-account-start-date" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="expiryDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{strings.accounts.expiryDate}</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} data-testid="input-account-expiry-date" />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

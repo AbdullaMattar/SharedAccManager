@@ -16,6 +16,8 @@ export interface AccountWithSlots {
   email: string;
   capacity: number;
   status: AccountWithSlotsStatus;
+  startDate: Date;
+  expiryDate: Date;
   /** @nullable */
   notes?: string | null;
   createdAt: Date;

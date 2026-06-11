@@ -17,5 +17,7 @@ export interface AccountInput {
   /** @minimum 1 */
   capacity: number;
   status: AccountInputStatus;
+  startDate: Date;
+  expiryDate: Date;
   notes?: string;
 }

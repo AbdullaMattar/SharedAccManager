@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import {
   auditLogTable,
+  accountsTable,
   db,
   paymentsTable,
   slotsTable,
@@ -12,7 +13,7 @@ import {
   renewalInputSchema,
   validationError,
 } from "@workspace/db";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { requireAuth } from "../lib/session";
 import { getRequestUser } from "../lib/request-user";
 import { baseSubscriptionQuery } from "../lib/subscription-query";
@@ -213,15 +214,45 @@ router.post(
         .where(eq(subscriptionsTable.id, params.data.id)).get();
       if (!old) return { error: "missing" as const };
       if (old.status === "cancelled") return { error: "cancelled" as const };
+      const account = tx
+        .select({
+          id: accountsTable.id,
+          startDate: accountsTable.startDate,
+          expiryDate: accountsTable.expiryDate,
+        })
+        .from(slotsTable)
+        .innerJoin(accountsTable, eq(slotsTable.accountId, accountsTable.id))
+        .where(eq(slotsTable.id, old.slotId))
+        .get();
+      if (!account) return { error: "missing" as const };
       const newer = tx.select({ id: subscriptionsTable.id }).from(subscriptionsTable)
         .where(and(eq(subscriptionsTable.slotId, old.slotId), eq(subscriptionsTable.status, "active")))
         .get();
       if (newer && newer.id !== old.id) return { error: "already_renewed" as const };
 
       const today = new Date().toISOString().slice(0, 10);
-      const startDate = old.expiryDate > today ? old.expiryDate : today;
+      const startDate = account.expiryDate > today ? account.expiryDate : today;
       const expiry = new Date(`${startDate}T00:00:00.000Z`);
       expiry.setUTCDate(expiry.getUTCDate() + parsed.data.durationDays);
+      const expiryDate = expiry.toISOString().slice(0, 10);
+
+      tx.update(accountsTable)
+        .set({ startDate, expiryDate })
+        .where(eq(accountsTable.id, account.id))
+        .run();
+
+      const accountSlots = tx
+        .select({ id: slotsTable.id })
+        .from(slotsTable)
+        .where(eq(slotsTable.accountId, account.id))
+        .all();
+      tx.update(subscriptionsTable)
+        .set({ startDate, expiryDate })
+        .where(and(
+          inArray(subscriptionsTable.slotId, accountSlots.map((slot) => slot.id)),
+          eq(subscriptionsTable.status, "active"),
+        ))
+        .run();
 
       tx.update(subscriptionsTable).set({ status: "expired" })
         .where(eq(subscriptionsTable.id, old.id)).run();
@@ -229,7 +260,7 @@ router.post(
         slotId: old.slotId,
         customerId: old.customerId,
         startDate,
-        expiryDate: expiry.toISOString().slice(0, 10),
+        expiryDate,
         price: parsed.data.price,
         status: "active",
         notes: parsed.data.notes ?? old.notes,

@@ -4,6 +4,12 @@ import bcrypt from "bcryptjs";
 import { encrypt } from "./lib/crypto";
 import { logger } from "./lib/logger";
 
+function dateAfter(days: number): string {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 async function seed() {
   // Create admin user
   const adminEmail = process.env.ADMIN_EMAIL ?? "admin@example.com";
@@ -72,6 +78,8 @@ async function seed() {
           passwordEncrypted: encrypt("SamplePass123!"),
           capacity: netflixProduct.defaultCapacity,
           status: "active",
+          startDate: new Date().toISOString().slice(0, 10),
+          expiryDate: dateAfter(netflixProduct.defaultDurationDays),
           notes: "حساب تجريبي",
         })
         .returning();

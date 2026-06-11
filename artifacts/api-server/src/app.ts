@@ -85,15 +85,14 @@ app.use(cookieParser());
 app.use("/api", router);
 
 // API 404 handler
-app.use("/api/*", (req, res) => {
+app.use("/api", (_req, res) => {
   res.status(404).json({ error: "الطلب غير موجود" });
 });
 
 const publicDir = path.resolve(process.cwd(), "public");
 if (existsSync(publicDir)) {
   app.use(express.static(publicDir));
-  // Express 5 compatible wildcard
-  app.get("/*", (_req, res, next) => {
+  app.get("/{*path}", (_req, res, next) => {
     if (_req.path.startsWith("/api")) {
       return next();
     }

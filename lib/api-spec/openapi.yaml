@@ -980,7 +980,7 @@ components:
 
     Account:
       type: object
-      required: [id, productId, label, email, capacity, status, createdAt]
+      required: [id, productId, label, email, capacity, status, startDate, expiryDate, createdAt]
       properties:
         id:
           type: integer
@@ -995,6 +995,12 @@ components:
         status:
           type: string
           enum: [active, disabled, needs_attention]
+        startDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
         notes:
           type: ["string", "null"]
         createdAt:
@@ -1012,6 +1018,8 @@ components:
           email,
           capacity,
           status,
+          startDate,
+          expiryDate,
           createdAt,
           slots,
           freeSlots,
@@ -1033,6 +1041,12 @@ components:
         status:
           type: string
           enum: [active, disabled, needs_attention]
+        startDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
         notes:
           type: ["string", "null"]
         createdAt:
@@ -1049,7 +1063,7 @@ components:
 
     AccountInput:
       type: object
-      required: [productId, label, email, password, capacity, status]
+      required: [productId, label, email, password, capacity, status, startDate, expiryDate]
       properties:
         productId:
           type: integer
@@ -1067,6 +1081,12 @@ components:
         status:
           type: string
           enum: [active, disabled, needs_attention]
+        startDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
         notes:
           type: string
 
@@ -1086,6 +1106,12 @@ components:
         status:
           type: string
           enum: [active, disabled, needs_attention]
+        startDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
         notes:
           type: ["string", "null"]
 
@@ -1439,7 +1465,7 @@ components:
 
     SaleInput:
       type: object
-      required: [productId, customerId, startDate, expiryDate, price, payment]
+      required: [productId, customerId, price, payment]
       properties:
         productId:
           type: integer
@@ -1448,12 +1474,6 @@ components:
           description: Omit to auto-assign the first free slot in the oldest active account.
         customerId:
           type: integer
-        startDate:
-          type: string
-          format: date
-        expiryDate:
-          type: string
-          format: date
         price:
           type: number
           minimum: 0

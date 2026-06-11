@@ -12,6 +12,8 @@ export const accountsTable = sqliteTable("accounts", {
   passwordEncrypted: text("password_encrypted").notNull(),
   capacity: integer("capacity").notNull().default(1),
   status: text("status", { enum: ["active", "disabled", "needs_attention"] }).notNull().default("active"),
+  startDate: text("start_date").notNull().default(sql`(date('now'))`),
+  expiryDate: text("expiry_date").notNull().default(sql`(date('now', '+30 days'))`),
   notes: text("notes"),
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 });
