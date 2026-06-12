@@ -129,6 +129,14 @@ $VARS = @(
 # ── Deploy ────────────────────────────────────────────────────────────────────
 az containerapp show --name $APP --resource-group $RG --output none
 if ($LASTEXITCODE -eq 0) {
+    # Deactivate old revisions first. With nobrl, SQLite locks are client-local,
+    # so an old replica must never write the DB while the new revision migrates.
+    # Costs ~30s of downtime; guarantees a single writer.
+    Write-Host "-> deactivating old revisions (brief downtime)..."
+    $oldRevs = (az containerapp revision list --name $APP --resource-group $RG --query "[?properties.active].name" -o tsv) -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+    foreach ($r in $oldRevs) {
+        az containerapp revision deactivate --name $APP --resource-group $RG --revision $r --output none
+    }
     Write-Host "-> updating app..."
     az containerapp update --name $APP --resource-group $RG --image $IMAGE --set-env-vars $VARS --output none
 } else {
