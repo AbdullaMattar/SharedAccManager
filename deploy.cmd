@@ -3,14 +3,14 @@ setlocal
 cd /d "%~dp0"
 set "SELF=%~f0"
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$self=$env:SELF; $tmp=[IO.Path]::GetTempFileName()+'.ps1'; $lines=[IO.File]::ReadAllLines($self); $i=0; while($i -lt $lines.Length -and $lines[$i] -ne ':: ==PS_START=='){$i++}; [IO.File]::WriteAllLines($tmp,$lines[($i+1)..($lines.Length-1)]); try{ & $tmp }finally{ Remove-Item $tmp -Force -EA 0 }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$self=$env:SELF; $tmp=[IO.Path]::GetTempFileName()+'.ps1'; $lines=[IO.File]::ReadAllLines($self,[Text.Encoding]::UTF8); $i=0; while($i -lt $lines.Length -and $lines[$i] -ne ':: ==PS_START=='){$i++}; [IO.File]::WriteAllLines($tmp,$lines[($i+1)..($lines.Length-1)],[Text.Encoding]::UTF8); try{ & $tmp }finally{ Remove-Item $tmp -Force -EA 0 }"
 
 if %ERRORLEVEL% neq 0 ( echo. & echo Deploy failed. )
 pause
 exit /b
 
 :: ==PS_START==
-# SharedAccManager — deploy to Azure Container Apps
+# SharedAccManager -deploy to Azure Container Apps
 # Re-run at any time to push the latest commit.
 # Prereqs: az login, Node.js, git
 
@@ -30,10 +30,10 @@ foreach ($c in "az","node","git") {
     if (-not (Get-Command $c -EA SilentlyContinue)) { Write-Error "$c not found"; exit 1 }
 }
 az account show --output none
-if ($LASTEXITCODE -ne 0) { Write-Error "Not logged in — run: az login"; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Error "Not logged in -run: az login"; exit 1 }
 
 Write-Host "-> subscription: $((az account show --query 'name' -o tsv).Trim())"
-Write-Host "   (wrong? run: az account set --subscription <name>)"
+Write-Host "   (wrong? run: az account set --subscription NAME)"
 Write-Host ""
 
 # ── Image ─────────────────────────────────────────────────────────────────────
@@ -64,7 +64,7 @@ if ($sl) {
 }
 Write-Host "-> storage: $SA/$SHARE"
 
-# ── Remove containerapp extension — it breaks az storage + az group ───────────
+# ── Remove containerapp extension -it breaks az storage + az group ───────────
 Write-Host "-> (disabling containerapp ext for storage ops)"
 az extension remove --name containerapp --output none
 
@@ -77,7 +77,7 @@ Write-Host "-> storage account..."
 az storage account create --name $SA --resource-group $RG --location $LOC --sku Standard_LRS --kind StorageV2 --output none
 
 $STORAGE_KEY = (az storage account keys list --account-name $SA --resource-group $RG --query "[0].value" -o tsv).Trim()
-if (-not $STORAGE_KEY) { Write-Error "Could not get storage key — check az errors above"; exit 1 }
+if (-not $STORAGE_KEY) { Write-Error "Could not get storage key -check az errors above"; exit 1 }
 
 Write-Host "-> file share..."
 az storage share-rm create --resource-group $RG --storage-account $SA --name $SHARE --quota 5 --output none
@@ -146,4 +146,4 @@ Write-Host "  Login:    $ADMIN_EMAIL / $ADMIN_PASSWORD"
 Write-Host "  Logs:     az containerapp logs show --name $APP --resource-group $RG --tail 50"
 Write-Host "  Teardown: az group delete --name $RG --yes --no-wait"
 Write-Host ""
-Write-Host "  Data persisted on Azure Files ($SA/$SHARE) — survives restarts and redeployments."
+Write-Host "  Data persisted on Azure Files ($SA/$SHARE) -survives restarts and redeployments."
