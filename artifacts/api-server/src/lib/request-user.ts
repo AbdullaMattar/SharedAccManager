@@ -1,6 +1,6 @@
 import type { Request } from "express";
-import type { User } from "@workspace/db";
+import type { AuthenticatedUser } from "./session";
 
-export function getRequestUser(req: Request): User {
-  return (req as Request & { user: User }).user;
+export function getRequestUser(req: Request): AuthenticatedUser {
+  return (req as Request & { user: AuthenticatedUser }).user;
 }

@@ -2,7 +2,7 @@ import cron from "node-cron";
 import Database from "better-sqlite3";
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
 import path from "node:path";
-import { db, slotsTable, subscriptionsTable } from "@workspace/db";
+import { db, organizationsTable, slotsTable, subscriptionsTable } from "@workspace/db";
 import { and, eq, lt, sql } from "drizzle-orm";
 import { getSettings } from "../lib/settings";
 import { logger } from "../lib/logger";
@@ -24,33 +24,46 @@ function databasePath(): string {
 }
 
 export async function runExpiryRollover(): Promise<void> {
-  const { graceDays } = await getSettings();
-  const result = db.transaction((tx) => {
-    const expired = tx.update(subscriptionsTable)
-      .set({ status: "expired" })
-      .where(and(
-        eq(subscriptionsTable.status, "active"),
-        lt(sql`date(${subscriptionsTable.expiryDate})`, sql`date('now')`),
-      )).run();
-    const freed = tx.run(sql`
-      update ${slotsTable}
-      set status = 'free'
-      where status = 'occupied'
-        and exists (
-          select 1 from subscriptions expired_subscription
-          where expired_subscription.slot_id = ${slotsTable.id}
-            and expired_subscription.status = 'expired'
-            and date(expired_subscription.expiry_date, ${`+${graceDays} days`}) < date('now')
-        )
-        and not exists (
-          select 1 from subscriptions active_subscription
-          where active_subscription.slot_id = ${slotsTable.id}
-            and active_subscription.status = 'active'
-        )
-    `);
-    return { expired: expired.changes, freed: freed.changes };
-  });
-  logger.info(result, "Daily subscription expiry rollover complete");
+  const organizations = await db.select({ id: organizationsTable.id }).from(organizationsTable);
+  const totals = { expired: 0, freed: 0 };
+
+  for (const organization of organizations) {
+    const { graceDays } = await getSettings(organization.id);
+    const result = db.transaction((tx) => {
+      const expired = tx.update(subscriptionsTable)
+        .set({ status: "expired" })
+        .where(and(
+          eq(subscriptionsTable.orgId, organization.id),
+          eq(subscriptionsTable.status, "active"),
+          lt(sql`date(${subscriptionsTable.expiryDate})`, sql`date('now')`),
+        )).run();
+      const freed = tx.run(sql`
+        update ${slotsTable}
+        set status = 'free'
+        where status = 'occupied'
+          and exists (
+            select 1
+            from subscriptions expired_subscription
+            where expired_subscription.slot_id = ${slotsTable.id}
+              and expired_subscription.org_id = ${organization.id}
+              and expired_subscription.status = 'expired'
+              and date(expired_subscription.expiry_date, ${`+${graceDays} days`}) < date('now')
+          )
+          and not exists (
+            select 1 from subscriptions active_subscription
+            where active_subscription.slot_id = ${slotsTable.id}
+              and active_subscription.org_id = ${organization.id}
+              and active_subscription.status = 'active'
+          )
+      `);
+      return { expired: expired.changes, freed: freed.changes };
+    });
+
+    totals.expired += result.expired;
+    totals.freed += result.freed;
+  }
+
+  logger.info(totals, "Daily subscription expiry rollover complete");
 }
 
 export async function runBackup(): Promise<void> {

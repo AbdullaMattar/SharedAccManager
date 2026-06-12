@@ -11,11 +11,13 @@ import { z } from "zod/v4";
 import { sql } from "drizzle-orm";
 import { slotsTable } from "./slots";
 import { customersTable } from "./customers";
+import { organizationsTable } from "./organizations";
 
 export const subscriptionsTable = sqliteTable(
   "subscriptions",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
+    orgId: integer("org_id").notNull().default(1).references(() => organizationsTable.id),
     slotId: integer("slot_id")
       .notNull()
       .references(() => slotsTable.id),

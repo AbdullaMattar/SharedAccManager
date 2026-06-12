@@ -2,9 +2,11 @@ import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { sql } from "drizzle-orm";
+import { organizationsTable } from "./organizations";
 
 export const productsTable = sqliteTable("products", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  orgId: integer("org_id").notNull().default(1).references(() => organizationsTable.id),
   name: text("name").notNull(),
   service: text("service").notNull(),
   defaultCapacity: integer("default_capacity").notNull().default(1),

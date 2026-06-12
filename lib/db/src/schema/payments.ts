@@ -4,9 +4,11 @@ import { z } from "zod/v4";
 import { sql } from "drizzle-orm";
 import { subscriptionsTable } from "./subscriptions";
 import { usersTable } from "./users";
+import { organizationsTable } from "./organizations";
 
 export const paymentsTable = sqliteTable("payments", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  orgId: integer("org_id").notNull().default(1).references(() => organizationsTable.id),
   subscriptionId: integer("subscription_id").notNull().references(() => subscriptionsTable.id),
   amount: real("amount").notNull(),
   method: text("method", { enum: ["cash", "transfer", "other"] }).notNull().default("cash"),

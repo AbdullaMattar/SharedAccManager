@@ -29,13 +29,15 @@ export const LoginResponse = zod.object({
   "name": zod.string(),
   "email": zod.string(),
   "role": zod.string(),
+  "orgName": zod.string().nullable(),
   "disabled": zod.boolean().optional()
 })
 
 
 /**
- * @summary Public sign-up (creates a staff account)
+ * @summary Public sign-up (creates an organization and owner account)
  */
+
 
 export const registerBodyPasswordMin = 8;
 
@@ -43,6 +45,7 @@ export const registerBodyPasswordMin = 8;
 
 export const RegisterBody = zod.object({
   "name": zod.string().min(1),
+  "businessName": zod.string().min(1),
   "email": zod.string().email(),
   "password": zod.string().min(registerBodyPasswordMin)
 })
@@ -52,6 +55,7 @@ export const RegisterResponse = zod.object({
   "name": zod.string(),
   "email": zod.string(),
   "role": zod.string(),
+  "orgName": zod.string().nullable(),
   "disabled": zod.boolean().optional()
 })
 
@@ -72,6 +76,7 @@ export const GetMeResponse = zod.object({
   "name": zod.string(),
   "email": zod.string(),
   "role": zod.string(),
+  "orgName": zod.string().nullable(),
   "disabled": zod.boolean().optional()
 })
 
@@ -857,6 +862,69 @@ export const GetRevenueReportResponse = zod.object({
   "productName": zod.string(),
   "revenue": zod.number()
 }))
+})
+
+
+/**
+ * @summary List organizations for the platform admin
+ */
+export const ListPlatformOrgsResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "status": zod.enum(['active', 'suspended']),
+  "createdAt": zod.coerce.date(),
+  "ownerEmail": zod.string().email().nullish(),
+  "usersCount": zod.number(),
+  "productsCount": zod.number(),
+  "accountsCount": zod.number(),
+  "customersCount": zod.number(),
+  "subscriptionsCount": zod.number(),
+  "paymentsCount": zod.number()
+})
+export const ListPlatformOrgsResponse = zod.array(ListPlatformOrgsResponseItem)
+
+
+/**
+ * @summary Suspend an organization
+ */
+export const SuspendPlatformOrgParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const SuspendPlatformOrgResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "status": zod.enum(['active', 'suspended']),
+  "createdAt": zod.coerce.date(),
+  "ownerEmail": zod.string().email().nullish(),
+  "usersCount": zod.number(),
+  "productsCount": zod.number(),
+  "accountsCount": zod.number(),
+  "customersCount": zod.number(),
+  "subscriptionsCount": zod.number(),
+  "paymentsCount": zod.number()
+})
+
+
+/**
+ * @summary Unsuspend an organization
+ */
+export const UnsuspendPlatformOrgParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UnsuspendPlatformOrgResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "status": zod.enum(['active', 'suspended']),
+  "createdAt": zod.coerce.date(),
+  "ownerEmail": zod.string().email().nullish(),
+  "usersCount": zod.number(),
+  "productsCount": zod.number(),
+  "accountsCount": zod.number(),
+  "customersCount": zod.number(),
+  "subscriptionsCount": zod.number(),
+  "paymentsCount": zod.number()
 })
 
 

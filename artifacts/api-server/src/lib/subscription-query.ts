@@ -6,7 +6,7 @@ import {
   slotsTable,
   subscriptionsTable,
 } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql, type SQL } from "drizzle-orm";
 import { computedSubscriptionStatus } from "./subscription-status";
 
 export const subscriptionSummary = {
@@ -30,14 +30,15 @@ export const subscriptionSummary = {
   createdAt: subscriptionsTable.createdAt,
 };
 
-export function baseSubscriptionQuery() {
+export function baseSubscriptionQuery(orgId: number, ...conditions: Array<SQL | undefined>) {
   return db
     .select(subscriptionSummary)
     .from(subscriptionsTable)
     .innerJoin(customersTable, eq(subscriptionsTable.customerId, customersTable.id))
     .innerJoin(slotsTable, eq(subscriptionsTable.slotId, slotsTable.id))
     .innerJoin(accountsTable, eq(slotsTable.accountId, accountsTable.id))
-    .innerJoin(productsTable, eq(accountsTable.productId, productsTable.id));
+    .innerJoin(productsTable, eq(accountsTable.productId, productsTable.id))
+    .where(and(eq(subscriptionsTable.orgId, orgId), ...conditions));
 }
 
 export const hasNoLaterSubscription = sql`

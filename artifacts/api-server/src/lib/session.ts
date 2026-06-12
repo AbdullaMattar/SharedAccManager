@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import { db, usersTable } from "@workspace/db";
+import { db, organizationsTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { createHmac, timingSafeEqual } from "crypto";
 
 const SESSION_COOKIE = "sam_session";
-const MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
+const MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
+const SUSPENDED_ORG_ERROR = "تم إيقاف حسابكم - يرجى التواصل مع الإدارة";
 
 function getSecret(): string {
   const s = process.env.SESSION_SECRET;
@@ -16,6 +17,10 @@ export interface SessionPayload {
   userId: number;
   exp: number;
 }
+
+export type AuthenticatedUser = typeof usersTable.$inferSelect & {
+  orgName: string | null;
+};
 
 function sign(payload: SessionPayload): string {
   const data = JSON.stringify(payload);
@@ -74,17 +79,53 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     res.status(401).json({ error: "غير مصرح" });
     return;
   }
+
   const payload = verify(token);
   if (!payload) {
     res.status(401).json({ error: "انتهت الجلسة، يرجى تسجيل الدخول مجددًا" });
     return;
   }
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, payload.userId));
-  if (!user || user.disabled) {
+
+  const [row] = await db
+    .select({
+      id: usersTable.id,
+      name: usersTable.name,
+      email: usersTable.email,
+      passwordHash: usersTable.passwordHash,
+      role: usersTable.role,
+      orgId: usersTable.orgId,
+      disabled: usersTable.disabled,
+      createdAt: usersTable.createdAt,
+      orgName: organizationsTable.name,
+      orgStatus: organizationsTable.status,
+    })
+    .from(usersTable)
+    .leftJoin(organizationsTable, eq(usersTable.orgId, organizationsTable.id))
+    .where(eq(usersTable.id, payload.userId));
+
+  if (!row || row.disabled) {
     res.status(401).json({ error: "المستخدم غير موجود" });
     return;
   }
-  (req as Request & { user: typeof user }).user = user;
+
+  if (row.orgId != null && row.orgStatus === "suspended") {
+    res.status(401).json({ error: SUSPENDED_ORG_ERROR });
+    return;
+  }
+
+  const user: AuthenticatedUser = {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    passwordHash: row.passwordHash,
+    role: row.role,
+    orgId: row.orgId,
+    disabled: row.disabled,
+    createdAt: row.createdAt,
+    orgName: row.orgName,
+  };
+
+  (req as Request & { user: AuthenticatedUser }).user = user;
   next();
 }
 
@@ -92,4 +133,8 @@ export function getSessionToken(req: Request): SessionPayload | null {
   const token = req.cookies?.[SESSION_COOKIE];
   if (!token) return null;
   return verify(token);
+}
+
+export function getSuspendedOrgError(): string {
+  return SUSPENDED_ORG_ERROR;
 }

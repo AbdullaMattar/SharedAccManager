@@ -25,6 +25,8 @@ export interface LoginInput {
 export interface RegisterInput {
   /** @minLength 1 */
   name: string;
+  /** @minLength 1 */
+  businessName: string;
   email: string;
   /** @minLength 8 */
   password: string;
@@ -35,6 +37,8 @@ export interface AuthUser {
   name: string;
   email: string;
   role: string;
+  /** @nullable */
+  orgName: string | null;
   disabled?: boolean;
 }
 
@@ -551,6 +555,29 @@ export interface RevenueReport {
   revenue: number;
   currency: string;
   byProduct: RevenueReportByProductItem[];
+}
+
+export type PlatformOrgStatus = typeof PlatformOrgStatus[keyof typeof PlatformOrgStatus];
+
+
+export const PlatformOrgStatus = {
+  active: 'active',
+  suspended: 'suspended',
+} as const;
+
+export interface PlatformOrg {
+  id: number;
+  name: string;
+  status: PlatformOrgStatus;
+  createdAt: string;
+  /** @nullable */
+  ownerEmail?: string | null;
+  usersCount: number;
+  productsCount: number;
+  accountsCount: number;
+  customersCount: number;
+  subscriptionsCount: number;
+  paymentsCount: number;
 }
 
 export type ListAccountsParams = {

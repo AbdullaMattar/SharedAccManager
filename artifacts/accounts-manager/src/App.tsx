@@ -18,46 +18,52 @@ import Settings from "@/pages/settings";
 import Users from "@/pages/users";
 import Audit from "@/pages/audit";
 import { AdminGuard } from "@/components/admin-guard";
+import { OrgGuard } from "@/components/org-guard";
+import { SuperadminGuard } from "@/components/superadmin-guard";
+import PlatformPage from "@/pages/platform";
+import { useAuth } from "@/lib/auth";
 
 const queryClient = new QueryClient();
 
 function Router() {
+  const { user } = useAuth();
   return (
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/">
         <AuthGuard>
-          <Dashboard />
+          {user?.role === "superadmin" ? <PlatformPage /> : <OrgGuard><Dashboard /></OrgGuard>}
         </AuthGuard>
       </Route>
       <Route path="/inventory">
         <AuthGuard>
-          <Inventory />
+          <OrgGuard><Inventory /></OrgGuard>
         </AuthGuard>
       </Route>
       <Route path="/products">
         <AuthGuard>
-          <Inventory />
+          <OrgGuard><Inventory /></OrgGuard>
         </AuthGuard>
       </Route>
       <Route path="/accounts">
         <AuthGuard>
-          <Inventory />
+          <OrgGuard><Inventory /></OrgGuard>
         </AuthGuard>
       </Route>
       <Route path="/customers/:id">
-        {(params) => <AuthGuard><CustomerDetail id={Number(params.id)} /></AuthGuard>}
+        {(params) => <AuthGuard><OrgGuard><CustomerDetail id={Number(params.id)} /></OrgGuard></AuthGuard>}
       </Route>
-      <Route path="/customers"><AuthGuard><Customers /></AuthGuard></Route>
+      <Route path="/customers"><AuthGuard><OrgGuard><Customers /></OrgGuard></AuthGuard></Route>
       <Route path="/subscriptions/:id">
-        {(params) => <AuthGuard><SubscriptionDetail id={Number(params.id)} /></AuthGuard>}
+        {(params) => <AuthGuard><OrgGuard><SubscriptionDetail id={Number(params.id)} /></OrgGuard></AuthGuard>}
       </Route>
-      <Route path="/subscriptions"><AuthGuard><Subscriptions /></AuthGuard></Route>
-      <Route path="/sale/new"><AuthGuard><NewSale /></AuthGuard></Route>
-      <Route path="/expiring"><AuthGuard><Expiring /></AuthGuard></Route>
-      <Route path="/admin/settings"><AuthGuard><AdminGuard><Settings /></AdminGuard></AuthGuard></Route>
-      <Route path="/admin/users"><AuthGuard><AdminGuard><Users /></AdminGuard></AuthGuard></Route>
-      <Route path="/admin/audit"><AuthGuard><AdminGuard><Audit /></AdminGuard></AuthGuard></Route>
+      <Route path="/subscriptions"><AuthGuard><OrgGuard><Subscriptions /></OrgGuard></AuthGuard></Route>
+      <Route path="/sale/new"><AuthGuard><OrgGuard><NewSale /></OrgGuard></AuthGuard></Route>
+      <Route path="/expiring"><AuthGuard><OrgGuard><Expiring /></OrgGuard></AuthGuard></Route>
+      <Route path="/admin/settings"><AuthGuard><OrgGuard><AdminGuard><Settings /></AdminGuard></OrgGuard></AuthGuard></Route>
+      <Route path="/admin/users"><AuthGuard><OrgGuard><AdminGuard><Users /></AdminGuard></OrgGuard></AuthGuard></Route>
+      <Route path="/admin/audit"><AuthGuard><OrgGuard><AdminGuard><Audit /></AdminGuard></OrgGuard></AuthGuard></Route>
+      <Route path="/platform"><AuthGuard><SuperadminGuard><PlatformPage /></SuperadminGuard></AuthGuard></Route>
       <Route component={NotFound} />
     </Switch>
   );

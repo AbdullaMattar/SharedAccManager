@@ -15,7 +15,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const { data: dashboard } = useGetDashboard();
   const [location, setLocation] = useLocation();
-  const businessName = dashboard?.businessName || strings.app.title;
+  const orgName = (user as { orgName?: string | null } | undefined)?.orgName;
+  const businessName = user?.role === "superadmin" ? "إدارة المنصة" : orgName || dashboard?.businessName || strings.app.title;
 
   const handleLogout = () => {
     logout.mutate(undefined, {
@@ -28,7 +29,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const navItems = [
+  const navItems = user?.role === "superadmin" ? [
+    { href: "/platform", label: "إدارة المنصة", icon: ShieldCheck },
+  ] : [
     { href: "/", label: strings.phase3.dashboard, icon: LayoutDashboard },
     { href: "/expiring", label: strings.phase3.expiringSoon, icon: CalendarClock },
     { href: "/sale/new", label: strings.nav.newSale, icon: ShoppingCart, prominent: true },

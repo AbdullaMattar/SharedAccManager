@@ -2,6 +2,8 @@ import { Router, type IRouter } from "express";
 import { accountsTable, db, paymentsTable, productsTable, slotsTable, subscriptionsTable } from "@workspace/db";
 import { and, asc, eq, gte, lt, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/session";
+import { requireOrgUser } from "../lib/rbac";
+import { getRequestUser } from "../lib/request-user";
 import { getSettings } from "../lib/settings";
 
 const router: IRouter = Router();
@@ -24,10 +26,11 @@ function monthBounds(yyyyMM: string) {
   return { start, next, prev };
 }
 
-function rangeWhere(start: string, end: string) {
+function rangeWhere(orgId: number, start: string, end: string) {
   return and(
+    eq(paymentsTable.orgId, orgId),
     gte(sql`datetime(${paymentsTable.paidAt})`, sql`datetime(${start})`),
-    lt(sql`datetime(${paymentsTable.paidAt})`, sql`datetime(${end})`)
+    lt(sql`datetime(${paymentsTable.paidAt})`, sql`datetime(${end})`),
   );
 }
 
@@ -38,13 +41,20 @@ function build12Months(selectedMonth: string): string[] {
   for (let i = 11; i >= 0; i--) {
     let mo = m - i;
     let yr = y;
-    while (mo <= 0) { mo += 12; yr--; }
+    while (mo <= 0) {
+      mo += 12;
+      yr--;
+    }
     months.push(`${yr}-${pad(mo)}`);
   }
   return months;
 }
 
-router.get("/reports/revenue", requireAuth, async (req, res): Promise<void> => {
+router.use("/reports", requireAuth, requireOrgUser);
+
+router.get("/reports/revenue", async (req, res): Promise<void> => {
+  const user = getRequestUser(req);
+  const orgId = user.orgId!;
   const selectedMonth = resolveMonth(req.query.month);
   const { start, next, prev } = monthBounds(selectedMonth);
 
@@ -55,8 +65,7 @@ router.get("/reports/revenue", requireAuth, async (req, res): Promise<void> => {
     db.select({
       revenue: sql<number>`coalesce(sum(${paymentsTable.amount}), 0)`,
       paymentsCount: sql<number>`count(${paymentsTable.id})`,
-    }).from(paymentsTable).where(rangeWhere(start, next)).get(),
-
+    }).from(paymentsTable).where(rangeWhere(orgId, start, next)).get(),
     db.select({
       productId: productsTable.id,
       productName: productsTable.name,
@@ -68,22 +77,21 @@ router.get("/reports/revenue", requireAuth, async (req, res): Promise<void> => {
       .innerJoin(slotsTable, eq(subscriptionsTable.slotId, slotsTable.id))
       .innerJoin(accountsTable, eq(slotsTable.accountId, accountsTable.id))
       .innerJoin(productsTable, eq(accountsTable.productId, productsTable.id))
-      .where(rangeWhere(start, next))
+      .where(rangeWhere(orgId, start, next))
       .groupBy(productsTable.id)
       .orderBy(asc(productsTable.name)),
-
     db.select({ revenue: sql<number>`coalesce(sum(${paymentsTable.amount}), 0)` })
-      .from(paymentsTable).where(rangeWhere(prev, start)).get(),
-
+      .from(paymentsTable)
+      .where(rangeWhere(orgId, prev, start))
+      .get(),
     db.select({
       month: sql<string>`strftime('%Y-%m', ${paymentsTable.paidAt})`,
       revenue: sql<number>`coalesce(sum(${paymentsTable.amount}), 0)`,
     })
       .from(paymentsTable)
-      .where(rangeWhere(trendStart, next))
+      .where(rangeWhere(orgId, trendStart, next))
       .groupBy(sql`strftime('%Y-%m', ${paymentsTable.paidAt})`),
-
-    getSettings(),
+    getSettings(orgId),
   ]);
 
   const revenue = totalResult?.revenue ?? 0;
@@ -91,8 +99,8 @@ router.get("/reports/revenue", requireAuth, async (req, res): Promise<void> => {
   const avgPayment = paymentsCount > 0 ? revenue / paymentsCount : 0;
   const prevMonthRevenue = prevResult?.revenue ?? 0;
 
-  const trendMap = new Map(trendRows.map((r) => [r.month, r.revenue]));
-  const monthly = months.map((mo) => ({ month: mo, revenue: trendMap.get(mo) ?? 0 }));
+  const trendMap = new Map(trendRows.map((row) => [row.month, row.revenue]));
+  const monthly = months.map((month) => ({ month, revenue: trendMap.get(month) ?? 0 }));
 
   res.json({
     month: selectedMonth,

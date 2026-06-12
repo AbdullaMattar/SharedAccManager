@@ -17,6 +17,7 @@ type Mode = "login" | "register";
 export default function Login() {
   const [mode, setMode] = useState<Mode>("login");
   const [name, setName] = useState("");
+  const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -83,7 +84,7 @@ export default function Login() {
       return;
     }
     registerMutation.mutate(
-      { data: { name, email, password } },
+      { data: { name, businessName, email, password } as never },
       {
         onSuccess: (data) => onAuthSuccess(data, strings.auth.registerSuccess),
         onError: (err: any) => onAuthError(err, strings.auth.registerError),
@@ -134,6 +135,19 @@ export default function Login() {
                   required
                   autoComplete="name"
                   data-testid="input-name"
+                />
+              </div>
+            )}
+            {isRegister && (
+              <div className="space-y-2">
+                <Label htmlFor="business-name">اسم النشاط</Label>
+                <Input
+                  id="business-name"
+                  type="text"
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  required
+                  data-testid="input-business-name"
                 />
               </div>
             )}

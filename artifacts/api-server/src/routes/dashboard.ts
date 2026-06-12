@@ -7,35 +7,38 @@ import {
   slotsTable,
   subscriptionsTable,
 } from "@workspace/db";
-import { and, asc, eq, gt, gte, lte, sql } from "drizzle-orm";
+import { and, asc, eq, gte, lte, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/session";
+import { requireOrgUser } from "../lib/rbac";
+import { getRequestUser } from "../lib/request-user";
 import { getSettings } from "../lib/settings";
 import { baseSubscriptionQuery, hasNoLaterSubscription } from "../lib/subscription-query";
 import { statusCondition } from "../lib/subscription-status";
 
 const router: IRouter = Router();
 
-router.get("/dashboard", requireAuth, async (_req, res): Promise<void> => {
-  const settings = await getSettings();
+router.use("/dashboard", requireAuth, requireOrgUser);
+
+router.get("/dashboard", async (req, res): Promise<void> => {
+  const user = getRequestUser(req);
+  const orgId = user.orgId!;
+  const settings = await getSettings(orgId);
   const futureActive = and(
+    eq(subscriptionsTable.orgId, orgId),
     eq(subscriptionsTable.status, "active"),
     gte(sql`date(${subscriptionsTable.expiryDate})`, sql`date('now')`),
   );
+
   const expiringCounts = Object.fromEntries(
     await Promise.all(
       [1, 3, 7].map(async (days) => {
         const result = await db
           .select({ count: sql<number>`count(*)` })
           .from(subscriptionsTable)
-          .where(
-            and(
-              futureActive,
-              lte(
-                sql`date(${subscriptionsTable.expiryDate})`,
-                sql`date('now', ${`+${days} days`})`,
-              ),
-            ),
-          )
+          .where(and(
+            futureActive,
+            lte(sql`date(${subscriptionsTable.expiryDate})`, sql`date('now', ${`+${days} days`})`),
+          ))
           .get();
         return [days, result?.count ?? 0];
       }),
@@ -43,8 +46,7 @@ router.get("/dashboard", requireAuth, async (_req, res): Promise<void> => {
   );
 
   const [overdue, freeSlotsByProduct, totals] = await Promise.all([
-    baseSubscriptionQuery()
-      .where(and(statusCondition("expired"), hasNoLaterSubscription))
+    baseSubscriptionQuery(orgId, statusCondition("expired"), hasNoLaterSubscription)
       .orderBy(asc(subscriptionsTable.expiryDate)),
     db
       .select({
@@ -58,19 +60,29 @@ router.get("/dashboard", requireAuth, async (_req, res): Promise<void> => {
         accountsTable,
         and(
           eq(accountsTable.productId, productsTable.id),
+          eq(accountsTable.orgId, orgId),
           eq(accountsTable.status, "active"),
         ),
       )
       .leftJoin(slotsTable, eq(slotsTable.accountId, accountsTable.id))
+      .where(eq(productsTable.orgId, orgId))
       .groupBy(productsTable.id)
       .orderBy(asc(productsTable.name)),
     Promise.all([
-      db.select({ count: sql<number>`count(*)` }).from(subscriptionsTable).where(statusCondition("active")).get(),
-      db.select({ count: sql<number>`count(*)` }).from(accountsTable).get(),
-      db
-        .select({ total: sql<number>`coalesce(sum(${paymentsTable.amount}), 0)` })
+      db.select({ count: sql<number>`count(*)` })
+        .from(subscriptionsTable)
+        .where(and(eq(subscriptionsTable.orgId, orgId), statusCondition("active")))
+        .get(),
+      db.select({ count: sql<number>`count(*)` })
+        .from(accountsTable)
+        .where(eq(accountsTable.orgId, orgId))
+        .get(),
+      db.select({ total: sql<number>`coalesce(sum(${paymentsTable.amount}), 0)` })
         .from(paymentsTable)
-        .where(gte(sql`datetime(${paymentsTable.paidAt})`, sql`datetime('now', 'start of month')`))
+        .where(and(
+          eq(paymentsTable.orgId, orgId),
+          gte(sql`datetime(${paymentsTable.paidAt})`, sql`datetime('now', 'start of month')`),
+        ))
         .get(),
     ]),
   ]);

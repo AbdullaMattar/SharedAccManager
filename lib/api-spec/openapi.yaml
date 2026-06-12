@@ -34,6 +34,8 @@ tags:
     description: Admin user management
   - name: reports
     description: Revenue reports
+  - name: platform
+    description: Platform admin operations
 
 paths:
   /healthz:
@@ -79,7 +81,7 @@ paths:
     post:
       operationId: register
       tags: [auth]
-      summary: Public sign-up (creates a staff account)
+      summary: Public sign-up (creates an organization and owner account)
       requestBody:
         required: true
         content:
@@ -906,6 +908,51 @@ paths:
               schema:
                 $ref: "#/components/schemas/RevenueReport"
 
+  /platform/orgs:
+    get:
+      operationId: listPlatformOrgs
+      tags: [platform]
+      summary: List organizations for the platform admin
+      responses:
+        "200":
+          description: Organizations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlatformOrg"
+
+  /platform/orgs/{id}/suspend:
+    post:
+      operationId: suspendPlatformOrg
+      tags: [platform]
+      summary: Suspend an organization
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Suspended organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformOrg"
+
+  /platform/orgs/{id}/unsuspend:
+    post:
+      operationId: unsuspendPlatformOrg
+      tags: [platform]
+      summary: Unsuspend an organization
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Unsuspended organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformOrg"
+
 components:
   parameters:
     Id:
@@ -948,9 +995,12 @@ components:
 
     RegisterInput:
       type: object
-      required: [name, email, password]
+      required: [name, businessName, email, password]
       properties:
         name:
+          type: string
+          minLength: 1
+        businessName:
           type: string
           minLength: 1
         email:
@@ -962,7 +1012,7 @@ components:
 
     AuthUser:
       type: object
-      required: [id, name, email, role]
+      required: [id, name, email, role, orgName]
       properties:
         id:
           type: integer
@@ -972,6 +1022,8 @@ components:
           type: string
         role:
           type: string
+        orgName:
+          type: ["string", "null"]
         disabled:
           type: boolean
 
@@ -1736,3 +1788,33 @@ components:
                 type: string
               revenue:
                 type: number
+
+    PlatformOrg:
+      type: object
+      required: [id, name, status, createdAt, usersCount, productsCount, accountsCount, customersCount, subscriptionsCount, paymentsCount]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, suspended]
+        createdAt:
+          type: string
+          format: date-time
+        ownerEmail:
+          type: ["string", "null"]
+          format: email
+        usersCount:
+          type: integer
+        productsCount:
+          type: integer
+        accountsCount:
+          type: integer
+        customersCount:
+          type: integer
+        subscriptionsCount:
+          type: integer
+        paymentsCount:
+          type: integer

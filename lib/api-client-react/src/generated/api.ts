@@ -44,6 +44,7 @@ import type {
   ManagedUser,
   PasswordResetInput,
   Payment,
+  PlatformOrg,
   Product,
   ProductInput,
   ProductUpdate,
@@ -236,7 +237,7 @@ export const getRegisterUrl = () => {
 }
 
 /**
- * @summary Public sign-up (creates a staff account)
+ * @summary Public sign-up (creates an organization and owner account)
  */
 export const register = async (registerInput: RegisterInput, options?: RequestInit): Promise<AuthUser> => {
 
@@ -285,7 +286,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RegisterMutationError = ErrorType<ErrorResponse>
 
     /**
- * @summary Public sign-up (creates a staff account)
+ * @summary Public sign-up (creates an organization and owner account)
  */
 export const useRegister = <TError = ErrorType<ErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof register>>, TError,{data: BodyType<RegisterInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -3140,4 +3141,221 @@ export function useGetRevenueReport<TData = Awaited<ReturnType<typeof getRevenue
 
 
 
+
+export const getListPlatformOrgsUrl = () => {
+
+
+
+
+  return `/api/platform/orgs`
+}
+
+/**
+ * @summary List organizations for the platform admin
+ */
+export const listPlatformOrgs = async ( options?: RequestInit): Promise<PlatformOrg[]> => {
+
+  return customFetch<PlatformOrg[]>(getListPlatformOrgsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPlatformOrgsQueryKey = () => {
+    return [
+    `/api/platform/orgs`
+    ] as const;
+    }
+
+
+export const getListPlatformOrgsQueryOptions = <TData = Awaited<ReturnType<typeof listPlatformOrgs>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPlatformOrgs>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPlatformOrgsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPlatformOrgs>>> = ({ signal }) => listPlatformOrgs({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPlatformOrgs>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListPlatformOrgsQueryResult = NonNullable<Awaited<ReturnType<typeof listPlatformOrgs>>>
+export type ListPlatformOrgsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List organizations for the platform admin
+ */
+
+export function useListPlatformOrgs<TData = Awaited<ReturnType<typeof listPlatformOrgs>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPlatformOrgs>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListPlatformOrgsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getSuspendPlatformOrgUrl = (id: number,) => {
+
+
+
+
+  return `/api/platform/orgs/${id}/suspend`
+}
+
+/**
+ * @summary Suspend an organization
+ */
+export const suspendPlatformOrg = async (id: number, options?: RequestInit): Promise<PlatformOrg> => {
+
+  return customFetch<PlatformOrg>(getSuspendPlatformOrgUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getSuspendPlatformOrgMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suspendPlatformOrg>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof suspendPlatformOrg>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['suspendPlatformOrg'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof suspendPlatformOrg>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  suspendPlatformOrg(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SuspendPlatformOrgMutationResult = NonNullable<Awaited<ReturnType<typeof suspendPlatformOrg>>>
+
+    export type SuspendPlatformOrgMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Suspend an organization
+ */
+export const useSuspendPlatformOrg = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suspendPlatformOrg>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof suspendPlatformOrg>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getSuspendPlatformOrgMutationOptions(options));
+    }
+
+export const getUnsuspendPlatformOrgUrl = (id: number,) => {
+
+
+
+
+  return `/api/platform/orgs/${id}/unsuspend`
+}
+
+/**
+ * @summary Unsuspend an organization
+ */
+export const unsuspendPlatformOrg = async (id: number, options?: RequestInit): Promise<PlatformOrg> => {
+
+  return customFetch<PlatformOrg>(getUnsuspendPlatformOrgUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getUnsuspendPlatformOrgMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unsuspendPlatformOrg>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof unsuspendPlatformOrg>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['unsuspendPlatformOrg'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unsuspendPlatformOrg>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  unsuspendPlatformOrg(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UnsuspendPlatformOrgMutationResult = NonNullable<Awaited<ReturnType<typeof unsuspendPlatformOrg>>>
+
+    export type UnsuspendPlatformOrgMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Unsuspend an organization
+ */
+export const useUnsuspendPlatformOrg = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unsuspendPlatformOrg>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof unsuspendPlatformOrg>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getUnsuspendPlatformOrgMutationOptions(options));
+    }
 

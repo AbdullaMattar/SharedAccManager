@@ -28,6 +28,19 @@ export type RevenueReport = {
   monthly: { month: string; revenue: number }[];
   products: { productId: number; productName: string; revenue: number; paymentsCount?: number }[];
 };
+export type PlatformOrg = {
+  id: number;
+  name: string;
+  status: "active" | "suspended";
+  createdAt: string;
+  ownerEmail?: string | null;
+  usersCount: number;
+  productsCount: number;
+  accountsCount: number;
+  customersCount: number;
+  subscriptionsCount: number;
+  paymentsCount: number;
+};
 
 type RawSubscription = { id: number; customerName: string; customerPhone: string; customerWhatsapp?: string | null; productName: string; accountLabel: string; expiryDate: string; price: number; productDefaultDurationDays: number };
 const normalizeSubscription = (item: RawSubscription): ExpiringSubscription => ({
@@ -68,4 +81,14 @@ export const useGetRevenueReport = (month?: string) => useQuery({
       products: raw.byProduct,
     } as RevenueReport;
   },
+});
+export const usePlatformOrgs = () => useQuery({
+  queryKey: ["platform", "orgs"],
+  queryFn: () => request<PlatformOrg[]>("/api/platform/orgs"),
+});
+export const useSuspendOrg = () => useMutation({
+  mutationFn: ({ id }: { id: number }) => request(`/api/platform/orgs/${id}/suspend`, { method: "POST" }),
+});
+export const useUnsuspendOrg = () => useMutation({
+  mutationFn: ({ id }: { id: number }) => request(`/api/platform/orgs/${id}/unsuspend`, { method: "POST" }),
 });

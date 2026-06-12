@@ -40,6 +40,8 @@ export * from './managedUserRole';
 export * from './passwordResetInput';
 export * from './payment';
 export * from './paymentMethod';
+export * from './platformOrg';
+export * from './platformOrgStatus';
 export * from './product';
 export * from './productInput';
 export * from './productUpdate';

@@ -13,6 +13,7 @@ import {
 } from "@workspace/db";
 import { and, asc, eq, gte, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/session";
+import { requireOrgUser } from "../lib/rbac";
 import { getRequestUser } from "../lib/request-user";
 
 const router: IRouter = Router();
@@ -25,64 +26,62 @@ function isActiveSlotConflict(error: unknown): boolean {
   );
 }
 
-router.get(
-  "/sales/availability",
-  requireAuth,
-  async (_req, res): Promise<void> => {
-    const products = await db
-      .select({
-        id: productsTable.id,
-        name: productsTable.name,
-        service: productsTable.service,
-        defaultDurationDays: productsTable.defaultDurationDays,
-        defaultPrice: productsTable.defaultPrice,
-        freeSlotCount: sql<number>`count(${slotsTable.id})`,
-      })
-      .from(productsTable)
-      .innerJoin(
-        accountsTable,
-        and(
-          eq(accountsTable.productId, productsTable.id),
-          eq(accountsTable.status, "active"),
-          gte(sql`date(${accountsTable.expiryDate})`, sql`date('now')`),
-        ),
-      )
-      .innerJoin(
-        slotsTable,
-        and(
-          eq(slotsTable.accountId, accountsTable.id),
-          eq(slotsTable.status, "free"),
-        ),
-      )
-      .groupBy(productsTable.id)
-      .orderBy(asc(productsTable.createdAt));
+router.use("/sales", requireAuth, requireOrgUser);
 
-    const freeSlots = await db
-      .select({
-        id: slotsTable.id,
-        accountId: accountsTable.id,
-        accountLabel: accountsTable.label,
-        productId: productsTable.id,
-        productName: productsTable.name,
-        slotIndex: slotsTable.slotIndex,
-      })
-      .from(slotsTable)
-      .innerJoin(accountsTable, eq(slotsTable.accountId, accountsTable.id))
-      .innerJoin(productsTable, eq(accountsTable.productId, productsTable.id))
-      .where(
-        and(
-          eq(slotsTable.status, "free"),
-          eq(accountsTable.status, "active"),
-          gte(sql`date(${accountsTable.expiryDate})`, sql`date('now')`),
-        ),
-      )
-      .orderBy(asc(accountsTable.createdAt), asc(slotsTable.slotIndex));
+router.get("/sales/availability", async (req, res): Promise<void> => {
+  const orgId = getRequestUser(req).orgId!;
+  const products = await db
+    .select({
+      id: productsTable.id,
+      name: productsTable.name,
+      service: productsTable.service,
+      defaultDurationDays: productsTable.defaultDurationDays,
+      defaultPrice: productsTable.defaultPrice,
+      freeSlotCount: sql<number>`count(${slotsTable.id})`,
+    })
+    .from(productsTable)
+    .innerJoin(
+      accountsTable,
+      and(
+        eq(accountsTable.productId, productsTable.id),
+        eq(accountsTable.orgId, orgId),
+        eq(accountsTable.status, "active"),
+        gte(sql`date(${accountsTable.expiryDate})`, sql`date('now')`),
+      ),
+    )
+    .innerJoin(
+      slotsTable,
+      and(eq(slotsTable.accountId, accountsTable.id), eq(slotsTable.status, "free")),
+    )
+    .where(eq(productsTable.orgId, orgId))
+    .groupBy(productsTable.id)
+    .orderBy(asc(productsTable.createdAt));
 
-    res.json({ products, freeSlots });
-  },
-);
+  const freeSlots = await db
+    .select({
+      id: slotsTable.id,
+      accountId: accountsTable.id,
+      accountLabel: accountsTable.label,
+      productId: productsTable.id,
+      productName: productsTable.name,
+      slotIndex: slotsTable.slotIndex,
+    })
+    .from(slotsTable)
+    .innerJoin(accountsTable, eq(slotsTable.accountId, accountsTable.id))
+    .innerJoin(productsTable, eq(accountsTable.productId, productsTable.id))
+    .where(and(
+      eq(productsTable.orgId, orgId),
+      eq(accountsTable.orgId, orgId),
+      eq(slotsTable.status, "free"),
+      eq(accountsTable.status, "active"),
+      gte(sql`date(${accountsTable.expiryDate})`, sql`date('now')`),
+    ))
+    .orderBy(asc(accountsTable.createdAt), asc(slotsTable.slotIndex));
 
-router.post("/sales", requireAuth, async (req, res): Promise<void> => {
+  res.json({ products, freeSlots });
+});
+
+router.post("/sales", async (req, res): Promise<void> => {
   const parsed = saleInputSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: validationError(parsed.error) });
@@ -90,6 +89,7 @@ router.post("/sales", requireAuth, async (req, res): Promise<void> => {
   }
 
   const user = getRequestUser(req);
+  const orgId = user.orgId!;
   const input = parsed.data;
 
   try {
@@ -97,22 +97,19 @@ router.post("/sales", requireAuth, async (req, res): Promise<void> => {
       const customer = tx
         .select({ id: customersTable.id, name: customersTable.name })
         .from(customersTable)
-        .where(eq(customersTable.id, input.customerId))
+        .where(and(eq(customersTable.id, input.customerId), eq(customersTable.orgId, orgId)))
         .get();
       if (!customer) return { error: "customer_missing" as const };
 
       const product = tx
         .select({ id: productsTable.id, name: productsTable.name })
         .from(productsTable)
-        .where(eq(productsTable.id, input.productId))
+        .where(and(eq(productsTable.id, input.productId), eq(productsTable.orgId, orgId)))
         .get();
       if (!product) return { error: "product_missing" as const };
 
       const slotCondition = input.slotId
-        ? and(
-            eq(slotsTable.id, input.slotId),
-            eq(accountsTable.productId, input.productId),
-          )
+        ? and(eq(slotsTable.id, input.slotId), eq(accountsTable.productId, input.productId))
         : eq(accountsTable.productId, input.productId);
 
       const slot = tx
@@ -126,14 +123,13 @@ router.post("/sales", requireAuth, async (req, res): Promise<void> => {
         })
         .from(slotsTable)
         .innerJoin(accountsTable, eq(slotsTable.accountId, accountsTable.id))
-        .where(
-          and(
-            slotCondition,
-            eq(slotsTable.status, "free"),
-            eq(accountsTable.status, "active"),
-            gte(sql`date(${accountsTable.expiryDate})`, sql`date('now')`),
-          ),
-        )
+        .where(and(
+          slotCondition,
+          eq(accountsTable.orgId, orgId),
+          eq(slotsTable.status, "free"),
+          eq(accountsTable.status, "active"),
+          gte(sql`date(${accountsTable.expiryDate})`, sql`date('now')`),
+        ))
         .orderBy(asc(accountsTable.createdAt), asc(slotsTable.slotIndex))
         .limit(1)
         .get();
@@ -150,6 +146,7 @@ router.post("/sales", requireAuth, async (req, res): Promise<void> => {
       const subscription = tx
         .insert(subscriptionsTable)
         .values({
+          orgId,
           slotId: slot.id,
           customerId: customer.id,
           startDate: slot.accountStartDate,
@@ -164,6 +161,7 @@ router.post("/sales", requireAuth, async (req, res): Promise<void> => {
       const payment = tx
         .insert(paymentsTable)
         .values({
+          orgId,
           subscriptionId: subscription.id,
           amount: input.payment.amount,
           method: input.payment.method,
@@ -174,15 +172,14 @@ router.post("/sales", requireAuth, async (req, res): Promise<void> => {
         .returning()
         .get();
 
-      tx.insert(auditLogTable)
-        .values({
-          userId: user.id,
-          action: "sale",
-          entity: "subscription",
-          entityId: subscription.id,
-          detail: `بيع ${product.name} للعميل ${customer.name} على الحساب ${slot.accountLabel}، المقعد ${slot.slotIndex}، بقيمة ${input.price}`,
-        })
-        .run();
+      tx.insert(auditLogTable).values({
+        userId: user.id,
+        orgId,
+        action: "sale",
+        entity: "subscription",
+        entityId: subscription.id,
+        detail: `بيع ${product.name} للعميل ${customer.name} على الحساب ${slot.accountLabel}، المقعد ${slot.slotIndex}، بقيمة ${input.price}`,
+      }).run();
 
       return {
         subscription,

@@ -4,7 +4,6 @@ import { startDailyMaintenance } from "./jobs/daily-maintenance";
 import seed from "./seed";
 import { runMigrations } from "@workspace/db";
 
-// ── Validate required env vars before anything else ──────────────────────────
 const rawPort = process.env["PORT"];
 if (!rawPort) throw new Error("PORT environment variable is required but was not provided.");
 const port = Number(rawPort);
@@ -14,11 +13,14 @@ if (!process.env["SESSION_SECRET"]) throw new Error("SESSION_SECRET environment 
 
 const encKey = process.env["ENCRYPTION_KEY"];
 if (!encKey) throw new Error("ENCRYPTION_KEY environment variable is required.");
-if (Buffer.from(encKey, "hex").length !== 32)
+if (Buffer.from(encKey, "hex").length !== 32) {
   throw new Error("ENCRYPTION_KEY must be a 64-character hex string (32 bytes).");
+}
 
-// ── Apply DB migrations then seed ────────────────────────────────────────────
 if (process.env.NODE_ENV === "production") {
+  if (!process.env["PLATFORM_ADMIN_EMAIL"] || !process.env["PLATFORM_ADMIN_PASSWORD"]) {
+    throw new Error("PLATFORM_ADMIN_EMAIL and PLATFORM_ADMIN_PASSWORD are required in production.");
+  }
   runMigrations();
   logger.info("Database migrations applied");
 }

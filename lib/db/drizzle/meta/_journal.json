@@ -8,6 +8,13 @@
       "when": 1781254863322,
       "tag": "0000_wonderful_iron_monger",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1781289371492,
+      "tag": "0001_real_rumiko_fujikawa",
+      "breakpoints": true
     }
   ]
 }

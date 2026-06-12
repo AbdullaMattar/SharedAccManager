@@ -3,9 +3,11 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { sql } from "drizzle-orm";
 import { productsTable } from "./products";
+import { organizationsTable } from "./organizations";
 
 export const accountsTable = sqliteTable("accounts", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  orgId: integer("org_id").notNull().default(1).references(() => organizationsTable.id),
   productId: integer("product_id").notNull().references(() => productsTable.id),
   label: text("label").notNull(),
   email: text("email").notNull(),

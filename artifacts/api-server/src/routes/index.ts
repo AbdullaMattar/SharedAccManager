@@ -12,6 +12,7 @@ import expiringRouter from "./expiring";
 import settingsRouter from "./settings";
 import usersRouter from "./users";
 import reportsRouter from "./reports";
+import platformRouter from "./platform";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(expiringRouter);
 router.use(settingsRouter);
 router.use(usersRouter);
 router.use(reportsRouter);
+router.use(platformRouter);
 
 export default router;

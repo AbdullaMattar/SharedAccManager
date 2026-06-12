@@ -1,4 +1,5 @@
 import { db, settingsTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 
 export const DEFAULT_SETTINGS = {
   reminder_lead_days: "3",
@@ -16,8 +17,8 @@ export type Settings = {
   currency: string;
 };
 
-export async function getSettings(): Promise<Settings> {
-  const rows = await db.select().from(settingsTable);
+export async function getSettings(orgId: number): Promise<Settings> {
+  const rows = await db.select().from(settingsTable).where(eq(settingsTable.orgId, orgId));
   const values: Record<keyof typeof DEFAULT_SETTINGS, string> = {
     ...DEFAULT_SETTINGS,
   };

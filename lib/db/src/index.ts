@@ -56,5 +56,14 @@ export * from "./schema";
 export function runMigrations(): void {
   const root = findWorkspaceRoot(process.cwd());
   const migrationsFolder = path.resolve(root, "lib/db/drizzle");
-  migrate(db, { migrationsFolder });
+  sqlite.pragma("foreign_keys = OFF");
+  try {
+    migrate(db, { migrationsFolder });
+  } finally {
+    sqlite.pragma("foreign_keys = ON");
+  }
+  const foreignKeyIssues = sqlite.pragma("foreign_key_check") as unknown[];
+  if (foreignKeyIssues.length > 0) {
+    throw new Error(`Foreign key check failed after migrations: ${JSON.stringify(foreignKeyIssues)}`);
+  }
 }
