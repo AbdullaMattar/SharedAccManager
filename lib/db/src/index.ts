@@ -1,4 +1,5 @@
 import { drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import Database from "better-sqlite3";
 import path from "path";
 import { mkdirSync, existsSync } from "fs";
@@ -39,3 +40,15 @@ sqlite.pragma("foreign_keys = ON");
 export const db = drizzle(sqlite, { schema });
 
 export * from "./schema";
+
+/**
+ * Apply all pending drizzle migrations from lib/db/drizzle/.
+ * Safe to call on every startup — already-applied migrations are skipped.
+ * findWorkspaceRoot resolves correctly in Docker (/app, no workspace yaml)
+ * and in the dev monorepo (walks up to the pnpm-workspace.yaml root).
+ */
+export function runMigrations(): void {
+  const root = findWorkspaceRoot(process.cwd());
+  const migrationsFolder = path.resolve(root, "lib/db/drizzle");
+  migrate(db, { migrationsFolder });
+}
