@@ -24,6 +24,7 @@ $SHARE   = "appdata"
 
 $ADMIN_EMAIL    = if ($env:ADMIN_EMAIL)    { $env:ADMIN_EMAIL }    else { "admin@example.com" }
 $ADMIN_PASSWORD = if ($env:ADMIN_PASSWORD) { $env:ADMIN_PASSWORD } else { "admin123" }
+$PLATFORM_EMAIL = if ($env:PLATFORM_ADMIN_EMAIL) { $env:PLATFORM_ADMIN_EMAIL } else { "platform@example.com" }
 
 # ── Prereqs ───────────────────────────────────────────────────────────────────
 foreach ($c in "az","node","git") {
@@ -44,14 +45,22 @@ Write-Host "-> image: $IMAGE"
 # ── Secrets ───────────────────────────────────────────────────────────────────
 if (Test-Path $SECRETS) {
     $L = Get-Content $SECRETS
-    $SESSION_SECRET = ($L | Where-Object { $_ -like "SESSION_SECRET=*" }) -replace "^SESSION_SECRET=",""
-    $ENCRYPTION_KEY = ($L | Where-Object { $_ -like "ENCRYPTION_KEY=*"  }) -replace "^ENCRYPTION_KEY=",""
+    $SESSION_SECRET  = ($L | Where-Object { $_ -like "SESSION_SECRET=*"        }) -replace "^SESSION_SECRET=",""
+    $ENCRYPTION_KEY  = ($L | Where-Object { $_ -like "ENCRYPTION_KEY=*"        }) -replace "^ENCRYPTION_KEY=",""
+    $PLATFORM_PASS   = ($L | Where-Object { $_ -like "PLATFORM_ADMIN_PASSWORD=*"}) -replace "^PLATFORM_ADMIN_PASSWORD=",""
     Write-Host "-> secrets: loaded"
 } else {
     $SESSION_SECRET = node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))"
     $ENCRYPTION_KEY = node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))"
     [IO.File]::WriteAllText("$PWD\$SECRETS","SESSION_SECRET=$SESSION_SECRET`nENCRYPTION_KEY=$ENCRYPTION_KEY`n")
     Write-Host "-> secrets: generated"
+}
+
+# Platform admin password — generated once on first deploy, never overwritten
+if (-not $PLATFORM_PASS) {
+    $PLATFORM_PASS = node -e "process.stdout.write(require('crypto').randomBytes(18).toString('base64url'))"
+    [IO.File]::AppendAllText("$PWD\$SECRETS","PLATFORM_ADMIN_PASSWORD=$PLATFORM_PASS`n")
+    Write-Host "-> platform admin password: generated (saved to $SECRETS)"
 }
 
 $L = Get-Content $SECRETS
@@ -111,6 +120,8 @@ $VARS = @(
     "ENCRYPTION_KEY=$ENCRYPTION_KEY"
     "ADMIN_EMAIL=$ADMIN_EMAIL"
     "ADMIN_PASSWORD=$ADMIN_PASSWORD"
+    "PLATFORM_ADMIN_EMAIL=$PLATFORM_EMAIL"
+    "PLATFORM_ADMIN_PASSWORD=$PLATFORM_PASS"
     "COOKIE_SECURE=true"
     "ALLOWED_ORIGINS=$APP_URL"
 )
@@ -147,7 +158,8 @@ if ($MOUNTED -eq "0") {
 Write-Host ""
 Write-Host "OK  $APP_URL"
 Write-Host ""
-Write-Host "  Login:    $ADMIN_EMAIL / $ADMIN_PASSWORD"
+Write-Host "  Login:           $ADMIN_EMAIL / $ADMIN_PASSWORD"
+Write-Host "  Platform admin:  $PLATFORM_EMAIL / $PLATFORM_PASS"
 Write-Host "  Logs:     az containerapp logs show --name $APP --resource-group $RG --tail 50"
 Write-Host "  Teardown: az group delete --name $RG --yes --no-wait"
 Write-Host ""
