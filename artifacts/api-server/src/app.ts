@@ -50,7 +50,17 @@ const sensitiveLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Throttle public account creation
+const registerLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: "كثير من محاولات إنشاء الحساب، يرجى المحاولة لاحقاً بعد 15 دقيقة" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use("/api/auth/login", loginLimiter);
+app.use("/api/auth/register", registerLimiter);
 app.use("/api/accounts/:id/reveal-password", sensitiveLimiter);
 
 const serverPort = process.env.PORT ?? "5000";
