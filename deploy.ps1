@@ -1,5 +1,5 @@
 # Deploy SharedAccManager to Azure Container Apps.
-# Usage:  .\deploy.ps1
+# Usage:  .\deploy.ps1   (or double-click deploy.cmd)
 # Re-run at any time to update the running app to the latest git commit.
 #
 # Prereqs: Azure CLI (az login), Node.js, git
@@ -7,6 +7,9 @@
 # Image:   pulled from ghcr.io — no local Docker needed
 #
 # Teardown: az group delete --name shared-acc-rg --yes --no-wait
+
+# Always run from the directory containing this script
+Set-Location $PSScriptRoot
 
 $RESOURCE_GROUP     = "shared-acc-rg"
 $LOCATION           = "francecentral"
@@ -28,6 +31,12 @@ if (-not (Get-Command git  -ErrorAction SilentlyContinue)) { Write-Error "ERROR:
 
 az account show --output none
 if ($LASTEXITCODE -ne 0) { Write-Error "ERROR: Not logged in. Run: az login"; exit 1 }
+
+$SUB_NAME = (az account show --query "name" -o tsv).Trim()
+$SUB_ID   = (az account show --query "id"   -o tsv).Trim()
+Write-Host "-> subscription: $SUB_NAME ($SUB_ID)"
+Write-Host "   (if wrong, run: az account set --subscription <name>)"
+Write-Host ""
 
 az extension add --name containerapp --upgrade --output none
 
