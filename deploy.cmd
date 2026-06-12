@@ -136,19 +136,22 @@ if ($LASTEXITCODE -eq 0) {
     az containerapp create --name $APP --resource-group $RG --environment $ENV --image $IMAGE --target-port 5000 --ingress external --min-replicas 0 --max-replicas 1 --cpu 0.5 --memory 1.0Gi --env-vars $VARS --output none
 }
 
-# ── Mount Azure Files volume if not already mounted ───────────────────────────
+# ── Mount Azure Files volume if not already mounted with nobrl ────────────────
+# nobrl is REQUIRED: SQLite byte-range lock requests fail on SMB ("database is
+# locked" / SQLITE_BUSY on the first write). nobrl keeps locks client-side —
+# safe because max-replicas 1 guarantees a single writer.
 # Use full JSON + PowerShell parsing — az --query returns empty string (not "null") for null values
 $appObj = (az containerapp show --name $APP --resource-group $RG -o json) | ConvertFrom-Json
 $vols   = $appObj.properties.template.volumes
 $MOUNTED = if (-not $vols) { "0" } else {
-    ($vols | Where-Object { $_.name -eq $SHARE } | Measure-Object).Count.ToString()
+    ($vols | Where-Object { $_.name -eq $SHARE -and $_.mountOptions -like "*nobrl*" } | Measure-Object).Count.ToString()
 }
 if ($MOUNTED -eq "0") {
-    Write-Host "-> mounting volume..."
+    Write-Host "-> mounting volume (nobrl)..."
     $TMP  = [IO.Path]::GetTempFileName() + ".json"
     $TMPS = [IO.Path]::GetTempFileName() + ".js"
     [IO.File]::WriteAllText($TMP, (az containerapp show --name $APP --resource-group $RG -o json) -join "`n")
-    [IO.File]::WriteAllText($TMPS, 'const fs=require("fs");const[,,f,m]=process.argv;const a=JSON.parse(fs.readFileSync(f,"utf8"));const t=a.properties.template;t.volumes=[{name:m,storageName:m,storageType:"AzureFile"}];t.containers[0].volumeMounts=[{volumeName:m,mountPath:"/app/data"}];fs.writeFileSync(f,JSON.stringify(a));')
+    [IO.File]::WriteAllText($TMPS, 'const fs=require("fs");const[,,f,m]=process.argv;const a=JSON.parse(fs.readFileSync(f,"utf8"));const t=a.properties.template;t.volumes=[{name:m,storageName:m,storageType:"AzureFile",mountOptions:"nobrl"}];t.containers[0].volumeMounts=[{volumeName:m,mountPath:"/app/data"}];fs.writeFileSync(f,JSON.stringify(a));')
     node $TMPS $TMP $SHARE
     az containerapp update --name $APP --resource-group $RG --yaml $TMP --output none
     Remove-Item $TMP,$TMPS -Force -EA SilentlyContinue
