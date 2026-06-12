@@ -305,11 +305,13 @@ az containerapp create `
   --env-vars `
     NODE_ENV=production `
     PORT=5000 `
-    DATABASE_URL=file:/app/data/app.db `
+    SQLITE_URL=file:/app/data/app.db `
     SESSION_SECRET=<SESSION_SECRET> `
     ENCRYPTION_KEY=<ENCRYPTION_KEY> `
     ADMIN_EMAIL=<YOUR_ADMIN_EMAIL> `
     ADMIN_PASSWORD=<YOUR_ADMIN_PASSWORD> `
+    COOKIE_SECURE=true `
+    ALLOWED_ORIGINS=https://shared-acc-app.<RANDOM>.eastus.azurecontainerapps.io `
   --cpu 0.5 `
   --memory 1.0Gi `
   --min-replicas 0 `
@@ -331,6 +333,26 @@ az containerapp show `
 Expected: A URL like `shared-acc-app.redfield-abc123.eastus.azurecontainerapps.io`
 
 The app is accessible at `https://<that-url>` — Azure provides HTTPS automatically.
+
+- [ ] **Step 5: Update ALLOWED_ORIGINS with the real FQDN**
+
+Replace `<FQDN>` with the URL from Step 4:
+
+```powershell
+az containerapp update `
+  --name shared-acc-app `
+  --resource-group shared-acc-rg `
+  --set-env-vars "ALLOWED_ORIGINS=https://<FQDN>"
+```
+
+This fixes CORS so login works from the real domain. Then restart the container to pick up the change:
+
+```powershell
+az containerapp revision restart `
+  --name shared-acc-app `
+  --resource-group shared-acc-rg `
+  --revision $(az containerapp revision list --name shared-acc-app --resource-group shared-acc-rg --query "[0].name" -o tsv)
+```
 
 ---
 
