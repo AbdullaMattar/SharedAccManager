@@ -126,7 +126,13 @@ if ($LASTEXITCODE -eq 0) {
 }
 
 # ── Mount Azure Files volume if not already mounted ───────────────────────────
-$MOUNTED = (az containerapp show --name $APP --resource-group $RG --query "properties.template.volumes[?name=='$SHARE'] | length(@)" -o tsv).Trim()
+# volumes can be null (never set) or an array — handle both
+$volJson = (az containerapp show --name $APP --resource-group $RG --query "properties.template.volumes" -o json).Trim()
+$MOUNTED = if ($volJson -eq "null" -or -not $volJson) {
+    "0"
+} else {
+    ($volJson | ConvertFrom-Json | Where-Object { $_.name -eq $SHARE } | Measure-Object).Count.ToString()
+}
 if ($MOUNTED -eq "0") {
     Write-Host "-> mounting volume..."
     $TMP  = [IO.Path]::GetTempFileName() + ".json"
