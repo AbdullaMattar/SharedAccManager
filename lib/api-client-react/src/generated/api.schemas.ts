@@ -22,6 +22,14 @@ export interface LoginInput {
   password: string;
 }
 
+export interface RegisterInput {
+  /** @minLength 1 */
+  name: string;
+  email: string;
+  /** @minLength 8 */
+  password: string;
+}
+
 export interface AuthUser {
   id: number;
   name: string;

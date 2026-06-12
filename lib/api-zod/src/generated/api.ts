@@ -34,6 +34,29 @@ export const LoginResponse = zod.object({
 
 
 /**
+ * @summary Public sign-up (creates a staff account)
+ */
+
+export const registerBodyPasswordMin = 8;
+
+
+
+export const RegisterBody = zod.object({
+  "name": zod.string().min(1),
+  "email": zod.string().email(),
+  "password": zod.string().min(registerBodyPasswordMin)
+})
+
+export const RegisterResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.string(),
+  "disabled": zod.boolean().optional()
+})
+
+
+/**
  * @summary Staff logout
  */
 export const LogoutResponse = zod.object({

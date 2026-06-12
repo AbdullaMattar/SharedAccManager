@@ -43,6 +43,7 @@ export * from './paymentMethod';
 export * from './product';
 export * from './productInput';
 export * from './productUpdate';
+export * from './registerInput';
 export * from './renewalInput';
 export * from './renewalInputPaymentMethod';
 export * from './renewalResult';
