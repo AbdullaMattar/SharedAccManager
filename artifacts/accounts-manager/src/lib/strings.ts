@@ -13,6 +13,11 @@ export const strings = {
   auth: {
     login: "تسجيل الدخول", email: "البريد الإلكتروني", password: "كلمة المرور", emailPlaceholder: "أدخل البريد الإلكتروني",
     passwordPlaceholder: "أدخل كلمة المرور", loginError: "بيانات الاعتماد غير صحيحة", loginSuccess: "تم تسجيل الدخول بنجاح",
+    register: "إنشاء حساب", registerTitle: "إنشاء حساب جديد", name: "الاسم", namePlaceholder: "أدخل اسمك الكامل",
+    confirmPassword: "تأكيد كلمة المرور", confirmPasswordPlaceholder: "أعد إدخال كلمة المرور",
+    passwordMismatch: "كلمتا المرور غير متطابقتين", passwordTooShort: "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+    registerSuccess: "تم إنشاء الحساب بنجاح", registerError: "تعذر إنشاء الحساب",
+    switchToRegister: "ليس لديك حساب؟ أنشئ حساباً جديداً", switchToLogin: "لديك حساب؟ سجّل الدخول",
   },
   nav: { products: "المنتجات", accounts: "الحسابات", inventory: "المخزون", stats: "الإحصائيات", customers: "العملاء", subscriptions: "الاشتراكات", newSale: "بيع جديد" },
   inventory: {
