@@ -115,7 +115,9 @@ $VARS = @(
     "NODE_ENV=production"
     "PORT=5000"
     "SQLITE_URL=file:/app/data/app.db"
-    "SQLITE_JOURNAL_MODE=delete"
+    # truncate, not delete: journal deletion races SMB metadata caching on Azure
+    # Files (SQLITE_IOERR_DELETE_NOENT); truncate never unlinks the journal file
+    "SQLITE_JOURNAL_MODE=truncate"
     "SESSION_SECRET=$SESSION_SECRET"
     "ENCRYPTION_KEY=$ENCRYPTION_KEY"
     "ADMIN_EMAIL=$ADMIN_EMAIL"
