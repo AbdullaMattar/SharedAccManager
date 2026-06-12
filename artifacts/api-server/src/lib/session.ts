@@ -56,7 +56,7 @@ export function setSession(res: Response, userId: number): void {
     httpOnly: true,
     sameSite: "lax",
     maxAge: MAX_AGE_SECONDS * 1000,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.COOKIE_SECURE === "true",
   });
 }
 
@@ -64,7 +64,7 @@ export function clearSession(res: Response): void {
   res.clearCookie(SESSION_COOKIE, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.COOKIE_SECURE === "true",
   });
 }
 
