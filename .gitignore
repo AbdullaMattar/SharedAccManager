@@ -51,4 +51,9 @@ Thumbs.db
 # Local secrets
 .env
 .deploy-secrets
+
+# SQLite database files (persisted in Azure Files in production, not in git)
+data/*.db
+data/*.db-shm
+data/*.db-wal
 data/backups/
