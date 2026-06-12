@@ -1,10 +1,13 @@
 node_modules
+**/node_modules
 .git
 .gitignore
 *.md
 .env
 data/
 dist/
+**/dist
 *.tsbuildinfo
+**/*.tsbuildinfo
 .local/
 attached_assets/
