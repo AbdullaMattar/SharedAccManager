@@ -92,3 +92,6 @@ export const useSuspendOrg = () => useMutation({
 export const useUnsuspendOrg = () => useMutation({
   mutationFn: ({ id }: { id: number }) => request(`/api/platform/orgs/${id}/unsuspend`, { method: "POST" }),
 });
+export const useDeleteOrg = () => useMutation({
+  mutationFn: ({ id }: { id: number }) => request(`/api/platform/orgs/${id}`, { method: "DELETE" }),
+});

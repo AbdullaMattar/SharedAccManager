@@ -3,12 +3,17 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { usePlatformOrgs, useSuspendOrg, useUnsuspendOrg } from "@/lib/phase3-api";
+import { usePlatformOrgs, useSuspendOrg, useUnsuspendOrg, useDeleteOrg } from "@/lib/phase3-api";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 export default function PlatformPage() {
   const { data = [], isLoading } = usePlatformOrgs();
   const suspend = useSuspendOrg();
   const unsuspend = useUnsuspendOrg();
+  const remove = useDeleteOrg();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -21,6 +26,13 @@ export default function PlatformPage() {
     mutation.mutate({ id }, {
       onSuccess: reload,
       onError: () => toast({ title: "تعذر تحديث حالة النشاط", variant: "destructive" }),
+    });
+  };
+
+  const deleteOrg = (id: number) => {
+    remove.mutate({ id }, {
+      onSuccess: reload,
+      onError: () => toast({ title: "تعذر حذف النشاط", variant: "destructive" }),
     });
   };
 
@@ -69,14 +81,40 @@ export default function PlatformPage() {
                     {org.id === 1 ? (
                       <span className="text-xs text-muted-foreground">النشاط التجريبي محمي</span>
                     ) : (
-                      <Button
-                        variant={org.status === "active" ? "destructive" : "outline"}
-                        size="sm"
-                        onClick={() => updateStatus(org.id, org.status === "active")}
-                        disabled={suspend.isPending || unsuspend.isPending}
-                      >
-                        {org.status === "active" ? "تعليق" : "إعادة تفعيل"}
-                      </Button>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant={org.status === "active" ? "destructive" : "outline"}
+                          size="sm"
+                          onClick={() => updateStatus(org.id, org.status === "active")}
+                          disabled={suspend.isPending || unsuspend.isPending}
+                        >
+                          {org.status === "active" ? "تعليق" : "إعادة تفعيل"}
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm" disabled={remove.isPending}>
+                              حذف
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>حذف النشاط نهائياً؟</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {`سيتم حذف "${org.name}" وكل بياناته (المستخدمون والمنتجات والحسابات والعملاء والاشتراكات والمدفوعات) نهائياً. لا يمكن التراجع عن هذا الإجراء.`}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteOrg(org.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                حذف
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>
