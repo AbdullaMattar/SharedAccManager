@@ -1,18 +1,26 @@
 export const strings = {
   app: {
-    title: "مدير الحسابات المشتركة", description: "أداة لإدارة الحسابات المشتركة", loading: "جاري التحميل...",
+    title: "تسهيل للحسابات", description: "أداة لإدارة الحسابات المشتركة", loading: "جاري التحميل...",
     error: "حدث خطأ غير متوقع", retry: "إعادة المحاولة", save: "حفظ", cancel: "إلغاء", delete: "حذف",
     edit: "تعديل", create: "إنشاء", logout: "تسجيل الخروج", search: "بحث...", noData: "لا توجد بيانات لعرضها",
     actions: "الإجراءات", confirmDelete: "هل أنت متأكد من الحذف؟", confirmDeleteDesc: "لا يمكن التراجع عن هذا الإجراء.",
     deleteError: "تعذر الحذف. قد يكون هذا العنصر مرتبطاً ببيانات أخرى.",
   },
   login: {
-    brandName: "مدير الحسابات المشتركة",
+    brandName: "تسهيل للحسابات",
+    brandNameLead: "تسهيل",
+    brandNameTrail: "للحسابات",
     tagline: "نظّم حساباتك المشتركة وعملاءك واشتراكاتك في مكان واحد",
     intro: "منصة متكاملة لإدارة الحسابات المشتركة: تتابع الاشتراكات، تنبّهك قبل انتهائها، وتنظّم مدفوعات عملائك.",
+    formLead: "سجّل الدخول للمتابعة إلى لوحة التحكم",
+    registerLead: "أنشئ حسابك وابدأ بإدارة اشتراكاتك",
     featureSubscriptions: "الاشتراكات",
+    featureSubscriptionsDesc: "تابع كل اشتراكات عملائك في مكان واحد",
     featureExpiry: "تنبيهات الانتهاء",
+    featureExpiryDesc: "ننبّهك قبل انتهاء أي اشتراك بوقتٍ كافٍ",
     featurePayments: "المدفوعات",
+    featurePaymentsDesc: "سجّل الدفعات وتابع إيراداتك بدقّة",
+    socialProof: "يثق به كثير من أصحاب الأعمال",
   },
   about: {
     title: "حول التطبيق",

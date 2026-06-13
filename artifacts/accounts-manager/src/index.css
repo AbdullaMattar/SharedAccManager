@@ -246,6 +246,28 @@
   }
 }
 
+/* Login brand entrance — used on the auth screen for staggered reveals */
+@keyframes tasheel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tasheel-rise {
+  animation: tasheel-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tasheel-rise {
+    animation: none;
+  }
+}
+
 /**
  * Using the elevate system.
  * Automatic contrast adjustment.
