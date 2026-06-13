@@ -92,52 +92,52 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  /* Slate/Blue-Grey Professional Theme */
-  --background: 210 40% 98%;
-  --foreground: 222 47% 11%;
-  
-  --border: 214 32% 91%;
-  
+  /* Tasheel brand palette — Oxford Navy / Pearl Aqua / Papaya Whip (light) */
+  --background: 40 64% 96%;
+  --foreground: 213 60% 15%;
+
+  --border: 38 38% 86%;
+
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --card-border: 214 32% 91%;
-  
-  --sidebar: 0 0% 100%;
-  --sidebar-foreground: 222 47% 11%;
-  --sidebar-border: 214 32% 91%;
-  --sidebar-primary: 221 83% 53%;
-  --sidebar-primary-foreground: 210 40% 98%;
-  --sidebar-accent: 210 40% 96%;
-  --sidebar-accent-foreground: 222 47% 11%;
-  --sidebar-ring: 221 83% 53%;
+  --card-foreground: 213 60% 15%;
+  --card-border: 38 38% 87%;
+
+  --sidebar: 40 56% 98%;
+  --sidebar-foreground: 213 60% 15%;
+  --sidebar-border: 38 38% 88%;
+  --sidebar-primary: 206 100% 18%;
+  --sidebar-primary-foreground: 38 100% 96%;
+  --sidebar-accent: 172 44% 91%;
+  --sidebar-accent-foreground: 206 100% 16%;
+  --sidebar-ring: 172 48% 46%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --popover-border: 214 32% 91%;
-  
-  --primary: 221 83% 53%;
-  --primary-foreground: 210 40% 98%;
-  
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222 47% 11%;
-  
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
-  
-  --accent: 210 40% 96%;
-  --accent-foreground: 222 47% 11%;
-  
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 210 40% 98%;
-  
-  --input: 214 32% 91%;
-  --ring: 221 83% 53%;
-  
-  --chart-1: 221 83% 53%;
-  --chart-2: 142 71% 45%;
-  --chart-3: 38 92% 50%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
+  --popover-foreground: 213 60% 15%;
+  --popover-border: 38 38% 87%;
+
+  --primary: 206 100% 18%;
+  --primary-foreground: 38 100% 96%;
+
+  --secondary: 38 56% 91%;
+  --secondary-foreground: 213 60% 15%;
+
+  --muted: 40 50% 93%;
+  --muted-foreground: 213 18% 42%;
+
+  --accent: 172 44% 91%;
+  --accent-foreground: 206 100% 16%;
+
+  --destructive: 0 72% 48%;
+  --destructive-foreground: 38 100% 96%;
+
+  --input: 38 38% 84%;
+  --ring: 172 48% 46%;
+
+  --chart-1: 206 100% 22%;
+  --chart-2: 170 50% 50%;
+  --chart-3: 38 82% 58%;
+  --chart-4: 199 70% 40%;
+  --chart-5: 14 62% 58%;
 
   --app-font-sans: 'Cairo', sans-serif;
   --app-font-serif: Georgia, serif;
