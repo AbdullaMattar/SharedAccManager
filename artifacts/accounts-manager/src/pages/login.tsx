@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Loader2, Eye, EyeOff, AlertCircle, ShieldAlert } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type Mode = "login" | "register";
@@ -23,6 +23,7 @@ export default function Login() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -55,14 +56,16 @@ export default function Login() {
   };
 
   const onAuthError = (err: any, fallback: string) => {
-    const msg = err?.response?.data?.error || fallback;
+    const msg = err?.data?.error || err?.response?.data?.error || fallback;
     setError(msg);
+    setErrorStatus(typeof err?.status === "number" ? err.status : null);
     toast({ title: msg, variant: "destructive" });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setErrorStatus(null);
 
     if (!isRegister) {
       loginMutation.mutate(
@@ -116,13 +119,19 @@ export default function Login() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
+            {error && errorStatus === 403 ? (
+              <Alert className="border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+                <ShieldAlert className="h-4 w-4" />
+                <AlertTitle>{strings.auth.suspendedTitle}</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            ) : error ? (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>{strings.app.error}</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
-            )}
+            ) : null}
             {isRegister && (
               <div className="space-y-2">
                 <Label htmlFor="name">{strings.auth.name}</Label>

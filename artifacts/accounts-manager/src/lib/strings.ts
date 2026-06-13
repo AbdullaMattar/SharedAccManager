@@ -17,6 +17,7 @@ export const strings = {
     confirmPassword: "تأكيد كلمة المرور", confirmPasswordPlaceholder: "أعد إدخال كلمة المرور",
     passwordMismatch: "كلمتا المرور غير متطابقتين", passwordTooShort: "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
     registerSuccess: "تم إنشاء الحساب بنجاح", registerError: "تعذر إنشاء الحساب",
+    suspendedTitle: "الحساب موقوف",
     switchToRegister: "ليس لديك حساب؟ أنشئ حساباً جديداً", switchToLogin: "لديك حساب؟ سجّل الدخول",
   },
   nav: { products: "المنتجات", accounts: "الحسابات", inventory: "المخزون", stats: "الإحصائيات", customers: "العملاء", subscriptions: "الاشتراكات", newSale: "بيع جديد" },
