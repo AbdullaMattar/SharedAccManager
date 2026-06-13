@@ -13,7 +13,6 @@ export const strings = {
     featureSubscriptions: "الاشتراكات",
     featureExpiry: "تنبيهات الانتهاء",
     featurePayments: "المدفوعات",
-    socialProof: "يثق به كثير من أصحاب الأعمال",
   },
   about: {
     title: "حول التطبيق",

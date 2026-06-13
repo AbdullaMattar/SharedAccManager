@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, EyeOff, AlertCircle, ShieldAlert, Layers, ReceiptText, CalendarClock, CircleDollarSign, Star } from "lucide-react";
+import { Loader2, Eye, EyeOff, AlertCircle, ShieldAlert } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type Mode = "login" | "register";
@@ -109,19 +109,22 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-lg" data-testid="card-login">
-        <CardContent className="space-y-6 pt-8">
-          {/* Brand band */}
-          <div className="space-y-3 text-center">
-            <div className="flex items-center justify-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl border bg-muted/40">
-                <Layers className="h-5 w-5 text-foreground" />
-              </span>
-              <h1 className="text-2xl font-bold tracking-tight">{strings.login.brandName}</h1>
-            </div>
-            <p className="text-sm font-medium text-foreground/80">{strings.login.tagline}</p>
-            <p className="mx-auto max-w-sm text-xs leading-relaxed text-muted-foreground">
+    <div
+      className="min-h-screen flex items-center justify-center bg-background p-4"
+      style={{
+        backgroundImage: "radial-gradient(hsl(var(--foreground) / 0.045) 1px, transparent 1px)",
+        backgroundSize: "22px 22px",
+      }}
+    >
+      <Card className="w-full max-w-lg border-s-2 border-s-primary shadow-sm" data-testid="card-login">
+        <CardContent className="space-y-7 pt-8">
+          {/* Masthead */}
+          <div className="space-y-2.5">
+            <h1 className="inline-block border-b-2 border-primary pb-1 text-3xl font-bold tracking-tight">
+              {strings.login.brandName}
+            </h1>
+            <p className="text-sm font-semibold text-foreground/85">{strings.login.tagline}</p>
+            <p className="max-w-md text-xs leading-relaxed text-muted-foreground">
               {isRegister ? strings.auth.registerTitle : strings.login.intro}
             </p>
           </div>
@@ -269,29 +272,18 @@ export default function Login() {
             </div>
           </form>
 
-          {/* Trust row */}
-          <div className="space-y-3 border-t pt-5">
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs text-muted-foreground">
-                <ReceiptText className="h-3.5 w-3.5" />
-                {strings.login.featureSubscriptions}
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs text-muted-foreground">
-                <CalendarClock className="h-3.5 w-3.5" />
-                {strings.login.featureExpiry}
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs text-muted-foreground">
-                <CircleDollarSign className="h-3.5 w-3.5" />
-                {strings.login.featurePayments}
-              </span>
-            </div>
-            <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-              <Star className="h-3.5 w-3.5" />
-              {strings.login.socialProof}
+          {/* Feature line */}
+          <div className="border-t pt-4">
+            <p className="text-xs tracking-wide text-muted-foreground">
+              {strings.login.featureSubscriptions}
+              <span className="mx-2 text-border">/</span>
+              {strings.login.featureExpiry}
+              <span className="mx-2 text-border">/</span>
+              {strings.login.featurePayments}
             </p>
           </div>
         </CardContent>
-        <div className="pb-4 text-center">
+        <div className="px-6 pb-5">
           <Link href="/about" className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
             {strings.about.poweredBy}
           </Link>
