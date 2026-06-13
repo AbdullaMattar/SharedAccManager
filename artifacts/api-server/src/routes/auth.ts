@@ -55,7 +55,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   }
 
   if (row.orgId != null && row.orgStatus === "suspended") {
-    res.status(401).json({ error: getSuspendedOrgError() });
+    res.status(403).json({ error: getSuspendedOrgError() });
     return;
   }
 
