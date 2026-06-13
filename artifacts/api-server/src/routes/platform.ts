@@ -7,12 +7,13 @@ import {
   organizationsTable,
   paymentsTable,
   productsTable,
+  settingsTable,
   subscriptionsTable,
   usersTable,
   validationError,
   idParamsSchema,
 } from "@workspace/db";
-import { and, asc, eq, min, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, min, or, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/session";
 import { requireSuperadmin } from "../lib/rbac";
 import { getRequestUser } from "../lib/request-user";
@@ -101,5 +102,65 @@ function orgStatusHandler(nextStatus: "active" | "suspended", action: "platform_
 
 router.post("/platform/orgs/:id/suspend", orgStatusHandler("suspended", "platform_suspend_org"));
 router.post("/platform/orgs/:id/unsuspend", orgStatusHandler("active", "platform_unsuspend_org"));
+
+router.delete("/platform/orgs/:id", async (req: Request, res: Response): Promise<void> => {
+  const params = idParamsSchema.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: validationError(params.error) });
+    return;
+  }
+  const orgId = params.data.id;
+  if (orgId === DEMO_ORG_ID) {
+    res.status(400).json({ error: "لا يمكن حذف النشاط التجريبي" });
+    return;
+  }
+
+  const actor = getRequestUser(req);
+  const deletedName = db.transaction((tx) => {
+    const organization = tx.select({ name: organizationsTable.name })
+      .from(organizationsTable)
+      .where(eq(organizationsTable.id, orgId))
+      .get();
+    if (!organization) return null;
+
+    const orgUserIds = tx.select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.orgId, orgId))
+      .all()
+      .map((u) => u.id);
+
+    tx.delete(paymentsTable).where(eq(paymentsTable.orgId, orgId)).run();
+    tx.delete(subscriptionsTable).where(eq(subscriptionsTable.orgId, orgId)).run();
+    tx.delete(accountsTable).where(eq(accountsTable.orgId, orgId)).run();
+    tx.delete(productsTable).where(eq(productsTable.orgId, orgId)).run();
+    tx.delete(customersTable).where(eq(customersTable.orgId, orgId)).run();
+    tx.delete(settingsTable).where(eq(settingsTable.orgId, orgId)).run();
+    if (orgUserIds.length > 0) {
+      tx.delete(auditLogTable)
+        .where(or(eq(auditLogTable.orgId, orgId), inArray(auditLogTable.userId, orgUserIds)))
+        .run();
+    } else {
+      tx.delete(auditLogTable).where(eq(auditLogTable.orgId, orgId)).run();
+    }
+    tx.delete(usersTable).where(eq(usersTable.orgId, orgId)).run();
+    tx.delete(organizationsTable).where(eq(organizationsTable.id, orgId)).run();
+
+    tx.insert(auditLogTable).values({
+      userId: actor.id,
+      orgId: null,
+      action: "platform_delete_org",
+      entity: "organization",
+      entityId: orgId,
+      detail: `حذف النشاط: ${organization.name}`,
+    }).run();
+    return organization.name;
+  });
+
+  if (!deletedName) {
+    res.status(404).json({ error: "النشاط غير موجود" });
+    return;
+  }
+  res.json({ ok: true });
+});
 
 export default router;
