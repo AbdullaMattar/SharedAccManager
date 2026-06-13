@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { KeyRound, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { usePlatformOrgs, useSuspendOrg, useUnsuspendOrg, useDeleteOrg } from "@/lib/phase3-api";
+import { usePlatformOrgs, useSuspendOrg, useUnsuspendOrg, useDeleteOrg, useResetOrgOwnerPassword, type PlatformOrg } from "@/lib/phase3-api";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -14,8 +18,11 @@ export default function PlatformPage() {
   const suspend = useSuspendOrg();
   const unsuspend = useUnsuspendOrg();
   const remove = useDeleteOrg();
+  const resetOwnerPassword = useResetOrgOwnerPassword();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [resetOrg, setResetOrg] = useState<PlatformOrg | undefined>();
+  const [newPassword, setNewPassword] = useState("");
 
   const reload = () => {
     queryClient.invalidateQueries({ queryKey: ["platform", "orgs"] });
@@ -33,6 +40,18 @@ export default function PlatformPage() {
     remove.mutate({ id }, {
       onSuccess: reload,
       onError: () => toast({ title: "تعذر حذف النشاط", variant: "destructive" }),
+    });
+  };
+
+  const doResetPassword = () => {
+    if (!resetOrg) return;
+    resetOwnerPassword.mutate({ id: resetOrg.id, password: newPassword }, {
+      onSuccess: () => {
+        setResetOrg(undefined);
+        setNewPassword("");
+        toast({ title: "تم إعادة تعيين كلمة المرور" });
+      },
+      onError: () => toast({ title: "تعذر إعادة تعيين كلمة المرور", variant: "destructive" }),
     });
   };
 
@@ -90,6 +109,14 @@ export default function PlatformPage() {
                         >
                           {org.status === "active" ? "تعليق" : "إعادة تفعيل"}
                         </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => { setResetOrg(org); setNewPassword(""); }}
+                          aria-label="إعادة تعيين كلمة المرور"
+                        >
+                          <KeyRound className="h-4 w-4" />
+                        </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="destructive" size="sm" disabled={remove.isPending}>
@@ -123,6 +150,29 @@ export default function PlatformPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={!!resetOrg} onOpenChange={(open) => { if (!open) { setResetOrg(undefined); setNewPassword(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>إعادة تعيين كلمة مرور المالك — {resetOrg?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-2">
+            <Label>كلمة المرور الجديدة</Label>
+            <Input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="8 أحرف على الأقل"
+              dir="ltr"
+            />
+          </div>
+          <DialogFooter>
+            <Button onClick={doResetPassword} disabled={resetOwnerPassword.isPending || newPassword.length < 8}>
+              {resetOwnerPassword.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "حفظ"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

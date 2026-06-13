@@ -95,3 +95,7 @@ export const useUnsuspendOrg = () => useMutation({
 export const useDeleteOrg = () => useMutation({
   mutationFn: ({ id }: { id: number }) => request(`/api/platform/orgs/${id}`, { method: "DELETE" }),
 });
+export const useResetOrgOwnerPassword = () => useMutation({
+  mutationFn: ({ id, password }: { id: number; password: string }) =>
+    request(`/api/platform/orgs/${id}/reset-owner-password`, { method: "POST", body: JSON.stringify({ password }) }),
+});

@@ -6,6 +6,7 @@ import {
   db,
   organizationsTable,
   paymentsTable,
+  passwordResetSchema,
   productsTable,
   settingsTable,
   subscriptionsTable,
@@ -14,6 +15,7 @@ import {
   idParamsSchema,
 } from "@workspace/db";
 import { and, asc, eq, inArray, min, or, sql } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 import { requireAuth } from "../lib/session";
 import { requireSuperadmin } from "../lib/rbac";
 import { getRequestUser } from "../lib/request-user";
@@ -102,6 +104,59 @@ function orgStatusHandler(nextStatus: "active" | "suspended", action: "platform_
 
 router.post("/platform/orgs/:id/suspend", orgStatusHandler("suspended", "platform_suspend_org"));
 router.post("/platform/orgs/:id/unsuspend", orgStatusHandler("active", "platform_unsuspend_org"));
+
+router.post("/platform/orgs/:id/reset-owner-password", async (req: Request, res: Response): Promise<void> => {
+  const params = idParamsSchema.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: validationError(params.error) });
+    return;
+  }
+  if (params.data.id === DEMO_ORG_ID) {
+    res.status(400).json({ error: "لا يمكن تعديل مستخدم النشاط التجريبي" });
+    return;
+  }
+  const parsed = passwordResetSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: validationError(parsed.error) });
+    return;
+  }
+
+  const actor = getRequestUser(req);
+  const owner = await db
+    .select({ id: usersTable.id, email: usersTable.email, orgId: usersTable.orgId })
+    .from(usersTable)
+    .where(and(eq(usersTable.orgId, params.data.id), eq(usersTable.role, "admin")))
+    .orderBy(asc(usersTable.createdAt))
+    .get();
+
+  if (!owner) {
+    res.status(404).json({ error: "لم يتم العثور على مالك النشاط" });
+    return;
+  }
+
+  const org = await db
+    .select({ name: organizationsTable.name })
+    .from(organizationsTable)
+    .where(eq(organizationsTable.id, params.data.id))
+    .get();
+
+  db.transaction((tx) => {
+    tx.update(usersTable)
+      .set({ passwordHash: bcrypt.hashSync(parsed.data.password, 12) })
+      .where(eq(usersTable.id, owner.id))
+      .run();
+    tx.insert(auditLogTable).values({
+      userId: actor.id,
+      orgId: null,
+      action: "platform_reset_owner_password",
+      entity: "user",
+      entityId: owner.id,
+      detail: `إعادة تعيين كلمة مرور مالك النشاط: ${org?.name ?? ""} (${owner.email})`,
+    }).run();
+  });
+
+  res.json({ ok: true });
+});
 
 router.delete("/platform/orgs/:id", async (req: Request, res: Response): Promise<void> => {
   const params = idParamsSchema.safeParse(req.params);
