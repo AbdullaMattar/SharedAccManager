@@ -6,6 +6,14 @@ export const strings = {
     actions: "الإجراءات", confirmDelete: "هل أنت متأكد من الحذف؟", confirmDeleteDesc: "لا يمكن التراجع عن هذا الإجراء.",
     deleteError: "تعذر الحذف. قد يكون هذا العنصر مرتبطاً ببيانات أخرى.",
   },
+  about: {
+    title: "حول التطبيق",
+    poweredBy: "تم التطوير بواسطة تسهيل",
+    description: "تم تطوير هذا التطبيق بواسطة تسهيل (Tasheel)، فريق يبني أدوات لتسهيل إدارة الأعمال.",
+    visit: "زيارة موقع تسهيل",
+    url: "https://abdullamattar.github.io/Tasheel/",
+    back: "العودة",
+  },
   notFound: {
     message: "الصفحة التي تبحث عنها غير موجودة.",
     goHome: "العودة إلى الرئيسية",

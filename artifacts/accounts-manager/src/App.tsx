@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/auth";
 import { AuthGuard } from "@/components/auth-guard";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
+import About from "@/pages/about";
 import Inventory from "@/pages/inventory";
 import Customers from "@/pages/customers";
 import CustomerDetail from "@/pages/customer-detail";
@@ -30,6 +31,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/about" component={About} />
       <Route path="/">
         <AuthGuard>
           {user?.role === "superadmin" ? <PlatformPage /> : <OrgGuard><Dashboard /></OrgGuard>}

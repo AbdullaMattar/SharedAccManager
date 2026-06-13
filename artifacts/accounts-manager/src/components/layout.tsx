@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useLogout } from "@workspace/api-client-react";
 import { strings } from "@/lib/strings";
-import { Package, LogOut, Menu, UserRound, ReceiptText, ShoppingCart, LayoutDashboard, CalendarClock, Settings, ShieldCheck, Loader2 } from "lucide-react";
+import { Package, LogOut, Menu, UserRound, ReceiptText, ShoppingCart, LayoutDashboard, CalendarClock, Settings, ShieldCheck, Loader2, Info } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -81,6 +81,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
           )}
           {strings.app.logout}
         </Button>
+        <Link href="/about" className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground" data-testid="nav-about">
+          <Info className="h-3.5 w-3.5" />
+          <span>{strings.about.poweredBy}</span>
+        </Link>
       </div>
     </div>
   );

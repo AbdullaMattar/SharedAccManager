@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLogin, useRegister } from "@workspace/api-client-react";
 import { useAuth } from "@/lib/auth";
@@ -261,6 +261,11 @@ export default function Login() {
             </div>
           </form>
         </CardContent>
+        <div className="pb-4 text-center">
+          <Link href="/about" className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
+            {strings.about.poweredBy}
+          </Link>
+        </div>
       </Card>
     </div>
   );
