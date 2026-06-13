@@ -34,6 +34,8 @@ export const strings = {
     passwordMismatch: "كلمتا المرور غير متطابقتين", passwordTooShort: "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
     registerSuccess: "تم إنشاء الحساب بنجاح", registerError: "تعذر إنشاء الحساب",
     suspendedTitle: "الحساب موقوف",
+    suspendedContactLabel: "تواصل عبر واتساب",
+    suspendedContactUrl: "https://wa.me/962796714521",
     switchToRegister: "ليس لديك حساب؟ أنشئ حساباً جديداً", switchToLogin: "لديك حساب؟ سجّل الدخول",
   },
   nav: { products: "المنتجات", accounts: "الحسابات", inventory: "المخزون", stats: "الإحصائيات", customers: "العملاء", subscriptions: "الاشتراكات", newSale: "بيع جديد" },

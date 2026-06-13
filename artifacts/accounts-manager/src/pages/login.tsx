@@ -134,7 +134,17 @@ export default function Login() {
               <Alert className="border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-100">
                 <ShieldAlert className="h-4 w-4" />
                 <AlertTitle>{strings.auth.suspendedTitle}</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>
+                  <span className="block">{error}</span>
+                  <a
+                    href={strings.auth.suspendedContactUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-block font-semibold underline underline-offset-4"
+                  >
+                    {strings.auth.suspendedContactLabel}
+                  </a>
+                </AlertDescription>
               </Alert>
             ) : error ? (
               <Alert variant="destructive">
