@@ -6,10 +6,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { RenewSubscriptionDialog } from "@/components/renew-subscription-dialog";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell, LabelList } from "recharts";
 import { useGetDashboard, useGetRevenueReport } from "@/lib/phase3-api";
 import { strings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
+
+const PRODUCT_COLORS = [
+  "hsl(221 83% 53%)",
+  "hsl(142 71% 45%)",
+  "hsl(38 92% 50%)",
+  "hsl(280 65% 60%)",
+  "hsl(0 72% 51%)",
+  "hsl(199 89% 48%)",
+];
 
 function formatMonthLabel(yyyyMM: string): string {
   const [year, month] = yyyyMM.split("-");
@@ -165,11 +174,26 @@ export default function Dashboard() {
             ) : (
               <>
                 <div dir="ltr">
-                  <ChartContainer config={productConfig} className="h-40 w-full">
-                    <BarChart layout="vertical" data={revenue?.products ?? []}>
-                      <CartesianGrid horizontal={false} />
-                      <XAxis type="number" />
-                      <YAxis type="category" dataKey="productName" width={90} />
+                  <ChartContainer
+                    config={productConfig}
+                    className="w-full"
+                    style={{ height: Math.max(160, (revenue?.products.length ?? 0) * 52 + 24) }}
+                  >
+                    <BarChart
+                      layout="vertical"
+                      data={revenue?.products ?? []}
+                      margin={{ top: 8, left: 12, right: 56, bottom: 8 }}
+                      barCategoryGap="28%"
+                    >
+                      <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+                      <XAxis type="number" hide />
+                      <YAxis
+                        type="category"
+                        dataKey="productName"
+                        width={110}
+                        tickLine={false}
+                        axisLine={false}
+                      />
                       <ChartTooltip
                         content={
                           <ChartTooltipContent
@@ -177,14 +201,31 @@ export default function Dashboard() {
                           />
                         }
                       />
-                      <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="revenue" radius={[0, 6, 6, 0]} maxBarSize={32}>
+                        {(revenue?.products ?? []).map((entry, index) => (
+                          <Cell key={entry.productId} fill={PRODUCT_COLORS[index % PRODUCT_COLORS.length]} />
+                        ))}
+                        <LabelList
+                          dataKey="revenue"
+                          position="right"
+                          offset={8}
+                          className="fill-foreground text-xs font-medium"
+                          formatter={(value: number) => `${value} ${revCurrency}`}
+                        />
+                      </Bar>
                     </BarChart>
                   </ChartContainer>
                 </div>
                 <div className="space-y-3">
-                  {revenue?.products.map((item) => (
+                  {revenue?.products.map((item, index) => (
                     <div key={item.productId} className="flex items-center justify-between rounded-md border p-4">
-                      <span>{item.productName}</span>
+                      <span className="flex items-center gap-3">
+                        <span
+                          className="h-3 w-3 shrink-0 rounded-full"
+                          style={{ backgroundColor: PRODUCT_COLORS[index % PRODUCT_COLORS.length] }}
+                        />
+                        {item.productName}
+                      </span>
                       <strong>{formatRevenue(item.revenue, (item.paymentsCount ?? 0) > 0)}</strong>
                     </div>
                   ))}
