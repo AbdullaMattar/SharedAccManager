@@ -125,7 +125,7 @@ $VARS = @(
     "PLATFORM_ADMIN_EMAIL=$PLATFORM_EMAIL"
     "PLATFORM_ADMIN_PASSWORD=$PLATFORM_PASS"
     "COOKIE_SECURE=true"
-    "ALLOWED_ORIGINS=$APP_URL"
+    "ALLOWED_ORIGINS=$APP_URL,https://account-manager.live"
 )
 
 # ── Deploy ────────────────────────────────────────────────────────────────────
