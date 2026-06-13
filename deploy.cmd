@@ -140,10 +140,10 @@ if ($LASTEXITCODE -eq 0) {
         az containerapp revision deactivate --name $APP --resource-group $RG --revision $r --output none
     }
     Write-Host "-> updating app..."
-    az containerapp update --name $APP --resource-group $RG --image $IMAGE --set-env-vars $VARS --output none
+    az containerapp update --name $APP --resource-group $RG --image $IMAGE --set-env-vars $VARS --min-replicas 1 --max-replicas 1 --output none
 } else {
     Write-Host "-> creating app..."
-    az containerapp create --name $APP --resource-group $RG --environment $ENV --image $IMAGE --target-port 5000 --ingress external --min-replicas 0 --max-replicas 1 --cpu 0.5 --memory 1.0Gi --env-vars $VARS --output none
+    az containerapp create --name $APP --resource-group $RG --environment $ENV --image $IMAGE --target-port 5000 --ingress external --min-replicas 1 --max-replicas 1 --cpu 0.5 --memory 1.0Gi --env-vars $VARS --output none
 }
 
 # ── Mount Azure Files volume if not already mounted with nobrl ────────────────
