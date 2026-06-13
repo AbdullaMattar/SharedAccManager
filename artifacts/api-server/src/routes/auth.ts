@@ -54,11 +54,6 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     return;
   }
 
-  if (row.orgId != null && row.orgStatus === "suspended") {
-    res.status(403).json({ error: getSuspendedOrgError() });
-    return;
-  }
-
   const valid = await bcrypt.compare(password, row.passwordHash);
   if (!valid) {
     db.insert(auditLogTable)
@@ -72,6 +67,11 @@ router.post("/auth/login", async (req, res): Promise<void> => {
       })
       .run();
     res.status(401).json({ error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" });
+    return;
+  }
+
+  if (row.orgId != null && row.orgStatus === "suspended") {
+    res.status(403).json({ error: getSuspendedOrgError() });
     return;
   }
 
