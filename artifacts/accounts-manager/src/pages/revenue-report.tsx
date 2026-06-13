@@ -7,6 +7,15 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts";
 import { useGetRevenueReport } from "@/lib/phase3-api";
 import { strings } from "@/lib/strings";
 
+const PRODUCT_COLORS = [
+  "hsl(221 83% 53%)",
+  "hsl(142 71% 45%)",
+  "hsl(38 92% 50%)",
+  "hsl(280 65% 60%)",
+  "hsl(0 72% 51%)",
+  "hsl(199 89% 48%)",
+];
+
 function formatMonthLabel(yyyyMM: string): string {
   const [year, month] = yyyyMM.split("-");
   return `${strings.phase3.monthNames[parseInt(month) - 1]} ${year}`;
@@ -133,10 +142,15 @@ export default function RevenueReport() {
           {(data?.products.length ?? 0) > 0 && (
             <div dir="ltr">
               <ChartContainer config={productConfig} className="h-40 w-full">
-                <BarChart layout="vertical" data={data?.products ?? []}>
+                <BarChart
+                  layout="vertical"
+                  data={data?.products ?? []}
+                  margin={{ left: 12, right: 12 }}
+                  barCategoryGap="30%"
+                >
                   <CartesianGrid horizontal={false} />
                   <XAxis type="number" />
-                  <YAxis type="category" dataKey="productName" width={90} />
+                  <YAxis type="category" dataKey="productName" width={120} />
                   <ChartTooltip
                     content={
                       <ChartTooltipContent
@@ -144,7 +158,11 @@ export default function RevenueReport() {
                       />
                     }
                   />
-                  <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="revenue" radius={[0, 4, 4, 0]} maxBarSize={28}>
+                    {(data?.products ?? []).map((entry, index) => (
+                      <Cell key={entry.productId} fill={PRODUCT_COLORS[index % PRODUCT_COLORS.length]} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ChartContainer>
             </div>
