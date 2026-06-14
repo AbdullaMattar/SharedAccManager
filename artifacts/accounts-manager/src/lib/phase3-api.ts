@@ -99,3 +99,26 @@ export const useResetOrgOwnerPassword = () => useMutation({
   mutationFn: ({ id, password }: { id: number; password: string }) =>
     request(`/api/platform/orgs/${id}/reset-owner-password`, { method: "POST", body: JSON.stringify({ password }) }),
 });
+
+export async function downloadBackup(passphrase: string): Promise<void> {
+  const response = await fetch("/api/backup/export", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ passphrase }),
+  });
+  if (!response.ok) throw new Error(await response.text());
+
+  const blob = await response.blob();
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const match = /filename="([^"]+)"/.exec(disposition);
+  const filename = match?.[1] ?? "backup.xlsx";
+
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
