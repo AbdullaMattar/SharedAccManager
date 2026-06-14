@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
+import XlsxPopulate from "xlsx-populate";
+import { buildWorkbookBuffer } from "../backup-export";
 import path from "node:path";
 import Database from "better-sqlite3";
 import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
@@ -70,5 +72,30 @@ describe("collectOrgData", () => {
     const data = await collectOrgData(database, orgA);
     expect(data.accounts[0].password).toBe("pw-A");
     expect(data.orgName).toBe("org-A");
+  });
+});
+
+describe("buildWorkbookBuffer", () => {
+  const data = {
+    orgName: "org-A",
+    exportedAt: "2026-06-13T00:00:00.000Z",
+    customers: [{ name: "customer-A", phone: "phone-A", whatsapp: null, email: null, notes: null, createdAt: "2026-01-01" }],
+    subscriptions: [{ customerName: "customer-A", customerPhone: "phone-A", productName: "product-A", accountLabel: "account-A", slotIndex: 1, startDate: "2026-01-01", expiryDate: "2026-02-01", price: 10, status: "active" }],
+    payments: [{ paidAt: "2026-01-01", amount: 10, method: "cash", customerName: "customer-A", productName: "product-A" }],
+    accounts: [{ productName: "product-A", label: "account-A", email: "acc-A@example.com", password: "pw-A", capacity: 1, status: "active", startDate: "2026-01-01", expiryDate: "2026-12-31", notes: null }],
+  };
+
+  it("produces an encrypted workbook readable with the passphrase", async () => {
+    const buffer = await buildWorkbookBuffer(data, "my passphrase");
+    const wb = await XlsxPopulate.fromDataAsync(buffer, { password: "my passphrase" });
+    expect(wb.sheets().map((s: any) => s.name())).toEqual(
+      expect.arrayContaining(["ملخص", "العملاء", "الاشتراكات", "المدفوعات", "الحسابات"]),
+    );
+    expect(wb.sheet("الحسابات").usedRange()!.value().flat()).toContain("pw-A");
+  });
+
+  it("cannot be opened with the wrong passphrase", async () => {
+    const buffer = await buildWorkbookBuffer(data, "my passphrase");
+    await expect(XlsxPopulate.fromDataAsync(buffer, { password: "nope" })).rejects.toBeTruthy();
   });
 });
