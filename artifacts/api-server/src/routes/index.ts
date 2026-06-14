@@ -13,6 +13,7 @@ import settingsRouter from "./settings";
 import usersRouter from "./users";
 import reportsRouter from "./reports";
 import platformRouter from "./platform";
+import backupRouter from "./backup";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(settingsRouter);
 router.use(usersRouter);
 router.use(reportsRouter);
 router.use(platformRouter);
+router.use(backupRouter);
 
 export default router;

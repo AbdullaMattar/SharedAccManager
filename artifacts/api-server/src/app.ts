@@ -62,6 +62,7 @@ const registerLimiter = rateLimit({
 app.use("/api/auth/login", loginLimiter);
 app.use("/api/auth/register", registerLimiter);
 app.use("/api/accounts/:id/reveal-password", sensitiveLimiter);
+app.use("/api/backup/export", sensitiveLimiter);
 
 const serverPort = process.env.PORT ?? "5000";
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") ?? [
