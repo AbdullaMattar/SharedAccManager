@@ -22,6 +22,7 @@ import { AdminGuard } from "@/components/admin-guard";
 import { OrgGuard } from "@/components/org-guard";
 import { SuperadminGuard } from "@/components/superadmin-guard";
 import PlatformPage from "@/pages/platform";
+import DataSecurity from "@/pages/data-security";
 import { useAuth } from "@/lib/auth";
 
 const queryClient = new QueryClient();
@@ -65,6 +66,7 @@ function Router() {
       <Route path="/admin/settings"><AuthGuard><OrgGuard><AdminGuard><Settings /></AdminGuard></OrgGuard></AuthGuard></Route>
       <Route path="/admin/users"><AuthGuard><OrgGuard><AdminGuard><Users /></AdminGuard></OrgGuard></AuthGuard></Route>
       <Route path="/admin/audit"><AuthGuard><OrgGuard><AdminGuard><Audit /></AdminGuard></OrgGuard></AuthGuard></Route>
+      <Route path="/admin/data-security"><AuthGuard><OrgGuard><AdminGuard><DataSecurity /></AdminGuard></OrgGuard></AuthGuard></Route>
       <Route path="/platform"><AuthGuard><SuperadminGuard><PlatformPage /></SuperadminGuard></AuthGuard></Route>
       <Route component={NotFound} />
     </Switch>
