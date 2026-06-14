@@ -108,7 +108,7 @@ export const strings = {
   phase3: {
     dashboard: "لوحة المتابعة", expiringSoon: "تنتهي قريباً", overdue: "اشتراكات متأخرة", freeSlots: "الخانات المتاحة", quickTotals: "ملخص العمل",
     withinOneDay: "خلال يوم", withinThreeDays: "خلال 3 أيام", withinSevenDays: "خلال 7 أيام", activeSubscriptions: "الاشتراكات النشطة", totalAccounts: "إجمالي الحسابات", monthlyRevenue: "إيرادات هذا الشهر",
-    needsAction: "تحتاج إلى إجراء", noOverdue: "لا توجد اشتراكات متأخرة", noExpiringSoon: "لا توجد اشتراكات تنتهي في هذه الفترة", daysRemaining: (days: number) => days < 0 ? `متأخر ${Math.abs(days)} يوم` : days === 0 ? "ينتهي اليوم" : `باقي ${days} يوم`,
+    noOverdue: "لا توجد اشتراكات متأخرة", noExpiringSoon: "لا توجد اشتراكات تنتهي في هذه الفترة", daysRemaining: (days: number) => days < 0 ? `متأخر ${Math.abs(days)} يوم` : days === 0 ? "ينتهي اليوم" : `باقي ${days} يوم`,
     whatsappReminder: (name: string, product: string, date: string) => `مرحباً ${name}، نذكرك بأن اشتراك ${product} ينتهي بتاريخ ${date}. يرجى التواصل معنا للتجديد.`,
     openWhatsapp: "إرسال تذكير", renew: "تجديد", renewTitle: "تجديد الاشتراك", renewDescription: "سيتم إنشاء اشتراك جديد وتسجيل الدفعة كاملة.", durationDays: "مدة التجديد بالأيام",
     previousPrice: "سعر التجديد", renewSuccess: "تم تجديد الاشتراك بنجاح", renewError: "تعذر تجديد الاشتراك", settings: "الإعدادات", reminderLeadDays: "أيام التذكير قبل الانتهاء",

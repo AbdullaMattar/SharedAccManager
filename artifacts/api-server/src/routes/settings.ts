@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
-import { auditLogTable, db, settingsTable, settingsUpdateSchema, validationError } from "@workspace/db";
+import { auditLogTable, db, organizationsTable, settingsTable, settingsUpdateSchema, validationError } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import { requireAuth } from "../lib/session";
 import { requireAdmin, requireOrgUser } from "../lib/rbac";
 import { getRequestUser } from "../lib/request-user";
@@ -22,6 +23,12 @@ router.patch("/settings", requireAdmin, async (req, res): Promise<void> => {
   }
   const user = getRequestUser(req);
   db.transaction((tx) => {
+    if (parsed.data.business_name !== undefined) {
+      tx.update(organizationsTable)
+        .set({ name: parsed.data.business_name })
+        .where(eq(organizationsTable.id, user.orgId!))
+        .run();
+    }
     for (const [key, value] of Object.entries(parsed.data)) {
       tx.insert(settingsTable)
         .values({ orgId: user.orgId!, key, value: String(value) })

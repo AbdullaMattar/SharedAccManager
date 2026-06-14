@@ -17,7 +17,7 @@ export default function Expiring() {
         ? strings.phase3.withinThreeDays
         : days === 7
           ? strings.phase3.withinSevenDays
-          : strings.phase3.needsAction;
+          : null;
 
   const { data = [], isLoading } = useListExpiringSubscriptions(days);
 
@@ -25,7 +25,7 @@ export default function Expiring() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-bold">{strings.phase3.expiringSoon}</h1>
-        <p className="text-sm text-muted-foreground">{subtitle}</p>
+        {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
       </div>
 
       {isLoading ? (

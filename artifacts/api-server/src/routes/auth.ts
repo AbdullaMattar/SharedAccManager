@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { auditLogTable, db, organizationsTable, usersTable } from "@workspace/db";
+import { auditLogTable, db, organizationsTable, settingsTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import {
@@ -125,6 +125,9 @@ router.post("/auth/register", async (req, res): Promise<void> => {
         })
         .returning()
         .get();
+      tx.insert(settingsTable)
+        .values({ orgId: organization.id, key: "business_name", value: businessName })
+        .run();
       tx.insert(auditLogTable)
         .values({
           userId: created.id,

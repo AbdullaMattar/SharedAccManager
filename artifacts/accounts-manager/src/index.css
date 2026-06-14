@@ -20,6 +20,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html {
+  font-size: 90%;
+}
+
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
