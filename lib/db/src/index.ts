@@ -4,6 +4,7 @@ import Database from "better-sqlite3";
 import path from "path";
 import { mkdirSync, existsSync } from "fs";
 import * as schema from "./schema";
+import { repairOrphanedAccountProducts } from "./repair";
 
 // Walk up from CWD to find the monorepo root (contains pnpm-workspace.yaml)
 function findWorkspaceRoot(start: string): string {
@@ -61,6 +62,10 @@ export function runMigrations(): void {
     migrate(db, { migrationsFolder });
   } finally {
     sqlite.pragma("foreign_keys = ON");
+  }
+  const repairedProducts = repairOrphanedAccountProducts(sqlite);
+  if (repairedProducts > 0) {
+    console.warn(`Recreated ${repairedProducts} missing products referenced by existing accounts.`);
   }
   const foreignKeyIssues = sqlite.pragma("foreign_key_check") as unknown[];
   if (foreignKeyIssues.length > 0) {

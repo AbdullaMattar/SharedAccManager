@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, productsTable } from "@workspace/db";
+import { accountsTable, db, productsTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
 import { requireAuth } from "../lib/session";
 import { requireOrgUser } from "../lib/rbac";
@@ -89,6 +89,15 @@ router.delete("/products/:id", async (req, res): Promise<void> => {
     return;
   }
   const user = getRequestUser(req);
+  const linkedAccount = await db
+    .select({ id: accountsTable.id })
+    .from(accountsTable)
+    .where(and(eq(accountsTable.productId, params.data.id), eq(accountsTable.orgId, user.orgId!)))
+    .get();
+  if (linkedAccount) {
+    res.status(409).json({ error: "لا يمكن حذف المنتج لوجود حسابات مرتبطة به" });
+    return;
+  }
   const [product] = await db
     .delete(productsTable)
     .where(and(eq(productsTable.id, params.data.id), eq(productsTable.orgId, user.orgId!)))
