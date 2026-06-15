@@ -264,7 +264,12 @@ for ($attempt = 1; $attempt -le 30; $attempt++) {
         $revisionJson = az containerapp revision show --name $APP --resource-group $RG --revision $newRevision -o json
         if ($LASTEXITCODE -eq 0 -and $revisionJson) {
             $revision = $revisionJson | ConvertFrom-Json
-            if ($revision.properties.runningState -eq "Running" -and $revision.properties.healthState -eq "Healthy") {
+            if (
+                $revision.properties.active -eq $true -and
+                $revision.properties.healthState -eq "Healthy" -and
+                $revision.properties.provisioningState -eq "Provisioned" -and
+                $revision.properties.replicas -ge 1
+            ) {
                 $healthy = $true
                 break
             }
