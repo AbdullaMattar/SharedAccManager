@@ -58,10 +58,22 @@ const tag = process.argv[2];
     }
 }
 
-function Restore-OldRevisions([string[]]$Revisions) {
-    foreach ($revision in $Revisions) {
-        az containerapp revision activate --name $APP --resource-group $RG --revision $revision --output none
+function Restore-PreviousHealthyRevision([string[]]$Revisions, [string]$FailedRevision) {
+    if ($FailedRevision) {
+        Write-Host "-> deactivating failed revision $FailedRevision..."
+        az containerapp revision deactivate --name $APP --resource-group $RG --revision $FailedRevision --output none
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Could not deactivate $FailedRevision. Refusing to activate another revision."
+            return
+        }
     }
+    if ($Revisions.Count -eq 0) {
+        Write-Warning "No previously healthy revision is available for rollback."
+        return
+    }
+    $revision = $Revisions[0]
+    Write-Host "-> restoring previous healthy revision $revision..."
+    az containerapp revision activate --name $APP --resource-group $RG --revision $revision --output none
 }
 
 # ── Prereqs ───────────────────────────────────────────────────────────────────
@@ -182,6 +194,8 @@ $VARS = @(
 
 # ── Deploy ────────────────────────────────────────────────────────────────────
 $oldRevs = @()
+$healthyOldRevs = @()
+$newRevision = ""
 az containerapp show --name $APP --resource-group $RG --output none
 if ($LASTEXITCODE -eq 0) {
     # Deactivate old revisions first. With nobrl, SQLite locks are client-local,
@@ -189,16 +203,23 @@ if ($LASTEXITCODE -eq 0) {
     # Costs ~30s of downtime; guarantees a single writer.
     Write-Host "-> deactivating old revisions (brief downtime)..."
     $oldRevs = (az containerapp revision list --name $APP --resource-group $RG --query "[?properties.active].name" -o tsv) -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+    $healthyOldRevs = (az containerapp revision list --name $APP --resource-group $RG --query "[?properties.active && properties.healthState=='Healthy' && properties.provisioningState=='Provisioned'].name" -o tsv) -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ } | Select-Object -First 1
     foreach ($r in $oldRevs) {
         az containerapp revision deactivate --name $APP --resource-group $RG --revision $r --output none
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Could not deactivate old revision $r. Deployment stopped to preserve a single writer."
+            exit 1
+        }
     }
     Write-Host "-> updating app..."
     az containerapp update --name $APP --resource-group $RG --image $IMAGE --set-env-vars $VARS --min-replicas 1 --max-replicas 1 --output none
     if ($LASTEXITCODE -ne 0) {
-        Restore-OldRevisions $oldRevs
-        Write-Error "Container App update failed. Previous revisions were reactivated."
+        $newRevision = (az containerapp show --name $APP --resource-group $RG --query "properties.latestRevisionName" -o tsv).Trim()
+        Restore-PreviousHealthyRevision $healthyOldRevs $newRevision
+        Write-Error "Container App update failed."
         exit 1
     }
+    $newRevision = (az containerapp show --name $APP --resource-group $RG --query "properties.latestRevisionName" -o tsv).Trim()
 } else {
     Write-Host "-> creating app..."
     az containerapp create --name $APP --resource-group $RG --environment $ENV --image $IMAGE --target-port 5000 --ingress external --min-replicas 1 --max-replicas 1 --cpu 0.5 --memory 1.0Gi --env-vars $VARS --output none
@@ -206,6 +227,7 @@ if ($LASTEXITCODE -eq 0) {
         Write-Error "Container App creation failed."
         exit 1
     }
+    $newRevision = (az containerapp show --name $APP --resource-group $RG --query "properties.latestRevisionName" -o tsv).Trim()
 }
 
 # ── Mount Azure Files volume if not already mounted with nobrl ────────────────
@@ -228,18 +250,18 @@ if ($MOUNTED -eq "0") {
     az containerapp update --name $APP --resource-group $RG --yaml $TMP --output none
     Remove-Item $TMP,$TMPS -Force -EA SilentlyContinue
     if ($LASTEXITCODE -ne 0) {
-        Restore-OldRevisions $oldRevs
-        Write-Error "Container App volume mount update failed. Previous revisions were reactivated."
+        Restore-PreviousHealthyRevision $healthyOldRevs $newRevision
+        Write-Error "Container App volume mount update failed."
         exit 1
     }
+    $newRevision = (az containerapp show --name $APP --resource-group $RG --query "properties.latestRevisionName" -o tsv).Trim()
 }
 
 Write-Host "-> checking revision health..."
 $healthy = $false
 for ($attempt = 1; $attempt -le 30; $attempt++) {
-    $latestRev = (az containerapp show --name $APP --resource-group $RG --query "properties.latestRevisionName" -o tsv).Trim()
-    if ($latestRev) {
-        $revisionJson = az containerapp revision show --name $APP --resource-group $RG --revision $latestRev -o json
+    if ($newRevision) {
+        $revisionJson = az containerapp revision show --name $APP --resource-group $RG --revision $newRevision -o json
         if ($LASTEXITCODE -eq 0 -and $revisionJson) {
             $revision = $revisionJson | ConvertFrom-Json
             if ($revision.properties.runningState -eq "Running" -and $revision.properties.healthState -eq "Healthy") {
@@ -251,8 +273,8 @@ for ($attempt = 1; $attempt -le 30; $attempt++) {
     if ($attempt -lt 30) { Start-Sleep -Seconds 10 }
 }
 if (-not $healthy) {
-    Restore-OldRevisions $oldRevs
-    Write-Error "The new Container App revision did not become healthy. Previous revisions were reactivated."
+    Restore-PreviousHealthyRevision $healthyOldRevs $newRevision
+    Write-Error "The new Container App revision did not become healthy."
     exit 1
 }
 
