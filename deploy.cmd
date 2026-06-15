@@ -26,6 +26,44 @@ $ADMIN_EMAIL    = if ($env:ADMIN_EMAIL)    { $env:ADMIN_EMAIL }    else { "admin
 $ADMIN_PASSWORD = if ($env:ADMIN_PASSWORD) { $env:ADMIN_PASSWORD } else { "admin123" }
 $PLATFORM_EMAIL = if ($env:PLATFORM_ADMIN_EMAIL) { $env:PLATFORM_ADMIN_EMAIL } else { "platform@example.com" }
 
+function Test-GhcrImage([string]$ImageTag) {
+    $checkScript = @'
+const tag = process.argv[2];
+(async () => {
+  const tokenResponse = await fetch("https://ghcr.io/token?service=ghcr.io&scope=repository%3Aabdullamattar%2Fsharedaccmanager%3Apull");
+  if (!tokenResponse.ok) {
+    process.exitCode = 1;
+    return;
+  }
+  const { token } = await tokenResponse.json();
+  const manifestResponse = await fetch(`https://ghcr.io/v2/abdullamattar/sharedaccmanager/manifests/${encodeURIComponent(tag)}`, {
+    method: "HEAD",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.v2+json",
+    },
+  });
+  process.exitCode = manifestResponse.ok ? 0 : 1;
+})().catch(() => {
+  process.exitCode = 1;
+});
+'@
+    $checkFile = [IO.Path]::GetTempFileName() + ".mjs"
+    try {
+        [IO.File]::WriteAllText($checkFile, $checkScript)
+        node $checkFile $ImageTag
+        return ($LASTEXITCODE -eq 0)
+    } finally {
+        Remove-Item $checkFile -Force -EA SilentlyContinue
+    }
+}
+
+function Restore-OldRevisions([string[]]$Revisions) {
+    foreach ($revision in $Revisions) {
+        az containerapp revision activate --name $APP --resource-group $RG --revision $revision --output none
+    }
+}
+
 # ── Prereqs ───────────────────────────────────────────────────────────────────
 foreach ($c in "az","node","git") {
     if (-not (Get-Command $c -EA SilentlyContinue)) { Write-Error "$c not found"; exit 1 }
@@ -41,6 +79,20 @@ Write-Host ""
 $SHA   = (git rev-parse HEAD).Trim()
 $IMAGE = "${REPO}:${SHA}"
 Write-Host "-> image: $IMAGE"
+Write-Host "-> waiting for GitHub Actions image..."
+$imageReady = $false
+for ($attempt = 1; $attempt -le 60; $attempt++) {
+    if (Test-GhcrImage $SHA) {
+        $imageReady = $true
+        break
+    }
+    if ($attempt -lt 60) { Start-Sleep -Seconds 10 }
+}
+if (-not $imageReady) {
+    Write-Error "Image $IMAGE is not available in GHCR. Check the GitHub Actions build before deploying."
+    exit 1
+}
+Write-Host "-> image: ready"
 
 # ── Secrets ───────────────────────────────────────────────────────────────────
 if (Test-Path $SECRETS) {
@@ -129,6 +181,7 @@ $VARS = @(
 )
 
 # ── Deploy ────────────────────────────────────────────────────────────────────
+$oldRevs = @()
 az containerapp show --name $APP --resource-group $RG --output none
 if ($LASTEXITCODE -eq 0) {
     # Deactivate old revisions first. With nobrl, SQLite locks are client-local,
@@ -141,9 +194,18 @@ if ($LASTEXITCODE -eq 0) {
     }
     Write-Host "-> updating app..."
     az containerapp update --name $APP --resource-group $RG --image $IMAGE --set-env-vars $VARS --min-replicas 1 --max-replicas 1 --output none
+    if ($LASTEXITCODE -ne 0) {
+        Restore-OldRevisions $oldRevs
+        Write-Error "Container App update failed. Previous revisions were reactivated."
+        exit 1
+    }
 } else {
     Write-Host "-> creating app..."
     az containerapp create --name $APP --resource-group $RG --environment $ENV --image $IMAGE --target-port 5000 --ingress external --min-replicas 1 --max-replicas 1 --cpu 0.5 --memory 1.0Gi --env-vars $VARS --output none
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Container App creation failed."
+        exit 1
+    }
 }
 
 # ── Mount Azure Files volume if not already mounted with nobrl ────────────────
@@ -165,6 +227,33 @@ if ($MOUNTED -eq "0") {
     node $TMPS $TMP $SHARE
     az containerapp update --name $APP --resource-group $RG --yaml $TMP --output none
     Remove-Item $TMP,$TMPS -Force -EA SilentlyContinue
+    if ($LASTEXITCODE -ne 0) {
+        Restore-OldRevisions $oldRevs
+        Write-Error "Container App volume mount update failed. Previous revisions were reactivated."
+        exit 1
+    }
+}
+
+Write-Host "-> checking revision health..."
+$healthy = $false
+for ($attempt = 1; $attempt -le 30; $attempt++) {
+    $latestRev = (az containerapp show --name $APP --resource-group $RG --query "properties.latestRevisionName" -o tsv).Trim()
+    if ($latestRev) {
+        $revisionJson = az containerapp revision show --name $APP --resource-group $RG --revision $latestRev -o json
+        if ($LASTEXITCODE -eq 0 -and $revisionJson) {
+            $revision = $revisionJson | ConvertFrom-Json
+            if ($revision.properties.runningState -eq "Running" -and $revision.properties.healthState -eq "Healthy") {
+                $healthy = $true
+                break
+            }
+        }
+    }
+    if ($attempt -lt 30) { Start-Sleep -Seconds 10 }
+}
+if (-not $healthy) {
+    Restore-OldRevisions $oldRevs
+    Write-Error "The new Container App revision did not become healthy. Previous revisions were reactivated."
+    exit 1
 }
 
 # ── Done ──────────────────────────────────────────────────────────────────────
