@@ -21,13 +21,13 @@ import { requireAuth } from "../lib/session";
 import { requireSuperadmin } from "../lib/rbac";
 import { getRequestUser } from "../lib/request-user";
 import {
-  parseStoreBoolean,
+  DEMO_ORG_ID,
+  resolvePlatformWebsiteEnabled,
   STORE_PLATFORM_ENABLED_KEY,
   upsertSetting,
 } from "../lib/store-settings";
 
 const router: IRouter = Router();
-const DEMO_ORG_ID = 1;
 
 router.use("/platform", requireAuth, requireSuperadmin);
 
@@ -132,7 +132,7 @@ router.get("/platform/websites", async (_req: Request, res: Response): Promise<v
     orgId: organization.id,
     orgName: organization.name,
     orgStatus: organization.status,
-    platformEnabled: parseStoreBoolean(settingByOrg.get(organization.id), true),
+    platformEnabled: resolvePlatformWebsiteEnabled(organization.id, settingByOrg.get(organization.id)),
   })));
 });
 

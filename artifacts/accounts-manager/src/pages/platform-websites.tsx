@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { usePlatformWebsites, useUpdatePlatformWebsite } from "@/lib/phase3-api";
 import { strings } from "@/lib/strings";
 
+const DEMO_ORG_ID = 1;
+
 export default function PlatformWebsitesPage() {
   const { data = [], isLoading } = usePlatformWebsites();
   const update = useUpdatePlatformWebsite();
@@ -14,6 +16,7 @@ export default function PlatformWebsitesPage() {
   const { toast } = useToast();
 
   const setAccess = (orgId: number, platformEnabled: boolean) => {
+    if (orgId === DEMO_ORG_ID) return;
     update.mutate({ orgId, platformEnabled }, {
       onSuccess: () => queryClient.invalidateQueries({ queryKey: ["platform", "websites"] }),
       onError: () => toast({ title: strings.website.updateAccessError, variant: "destructive" }),
@@ -52,27 +55,30 @@ export default function PlatformWebsitesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((org) => (
-                <TableRow key={org.orgId}>
-                  <TableCell>
-                    <div className="font-medium">{org.orgName}</div>
-                    <div className="text-xs text-muted-foreground">#{org.orgId}</div>
-                  </TableCell>
-                  <TableCell>{org.orgStatus === "active" ? "نشط" : "معلق"}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Switch
-                        checked={org.platformEnabled}
-                        disabled={update.isPending}
-                        onCheckedChange={(checked) => setAccess(org.orgId, checked)}
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        {org.platformEnabled ? strings.website.accessAllowed : strings.website.accessBlocked}
-                      </span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {data.map((org) => {
+                const isDemoOrg = org.orgId === DEMO_ORG_ID;
+                return (
+                  <TableRow key={org.orgId}>
+                    <TableCell>
+                      <div className="font-medium">{org.orgName}</div>
+                      <div className="text-xs text-muted-foreground">#{org.orgId}</div>
+                    </TableCell>
+                    <TableCell>{org.orgStatus === "active" ? "نشط" : "معلق"}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Switch
+                          checked={org.platformEnabled}
+                          disabled={update.isPending || isDemoOrg}
+                          onCheckedChange={(checked) => setAccess(org.orgId, checked)}
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {org.platformEnabled ? strings.website.accessAllowed : strings.website.accessBlocked}
+                        </span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>

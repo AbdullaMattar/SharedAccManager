@@ -25,6 +25,16 @@ function publicUrl(slug: string): string {
   return slug ? `${window.location.origin}/store/${slug}` : "";
 }
 
+const storeSlugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+function normalizeWhatsapp(value: string): string {
+  return value.trim().replace(/[\s-]/g, "").replace(/^\+/, "");
+}
+
+function hasRequiredLiveInfo(form: Pick<WebsiteSettings, "slug" | "whatsapp">): boolean {
+  return storeSlugRegex.test(form.slug.trim().toLowerCase()) && /^\d{8,15}$/.test(normalizeWhatsapp(form.whatsapp));
+}
+
 export default function WebsitePage() {
   const { data, isLoading } = useGetWebsiteSettings();
   const update = useUpdateWebsiteSettings();
@@ -37,6 +47,11 @@ export default function WebsitePage() {
   }, [data]);
 
   const save = () => {
+    if (form.enabled && !hasRequiredLiveInfo(form)) {
+      toast({ title: strings.website.missingLiveInfo, variant: "destructive" });
+      return;
+    }
+
     update.mutate({
       enabled: form.enabled,
       slug: form.slug,

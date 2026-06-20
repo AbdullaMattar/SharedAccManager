@@ -14,6 +14,7 @@ export const STORE_SLUG_KEY = "store_slug";
 export const STORE_WHATSAPP_KEY = "store_whatsapp";
 export const STORE_NAME_KEY = "store_name";
 export const STORE_DESCRIPTION_KEY = "store_description";
+export const DEMO_ORG_ID = 1;
 
 const STORE_KEYS = [
   STORE_PLATFORM_ENABLED_KEY,
@@ -60,6 +61,11 @@ export function parseStoreBoolean(value: string | undefined, fallback: boolean):
   return value === "true";
 }
 
+export function resolvePlatformWebsiteEnabled(orgId: number, value: string | undefined): boolean {
+  if (orgId === DEMO_ORG_ID) return true;
+  return parseStoreBoolean(value, true);
+}
+
 export function normalizeWhatsapp(value: string): string {
   return value.trim().replace(/[\s-]/g, "").replace(/^\+/, "");
 }
@@ -78,7 +84,7 @@ function rowsToMap(rows: SettingRow[]): Partial<Record<StoreKey, string>> {
   return values;
 }
 
-export function resolveWebsiteConfig(rows: SettingRow[], orgName: string): WebsiteConfig {
+export function resolveWebsiteConfig(rows: SettingRow[], orgName: string, orgId?: number): WebsiteConfig {
   const values = rowsToMap(rows);
   const slug = (values.store_slug ?? "").trim().toLowerCase();
   const whatsapp = values.store_whatsapp ? normalizeWhatsapp(values.store_whatsapp) : "";
@@ -86,7 +92,9 @@ export function resolveWebsiteConfig(rows: SettingRow[], orgName: string): Websi
   const description = (values.store_description ?? "").trim();
 
   return {
-    platformEnabled: parseStoreBoolean(values.store_platform_enabled, true),
+    platformEnabled: orgId === undefined
+      ? parseStoreBoolean(values.store_platform_enabled, true)
+      : resolvePlatformWebsiteEnabled(orgId, values.store_platform_enabled),
     enabled: parseStoreBoolean(values.store_enabled, false),
     slug,
     whatsapp,
@@ -107,7 +115,7 @@ export async function getWebsiteConfig(orgId: number): Promise<WebsiteConfig | n
   ]);
 
   if (!organization) return null;
-  return resolveWebsiteConfig(rows, organization.name);
+  return resolveWebsiteConfig(rows, organization.name, orgId);
 }
 
 export async function assertStoreSlugAvailable(slug: string, orgId: number): Promise<boolean> {
@@ -211,7 +219,7 @@ export async function getPublicStoreBySlug(slug: string): Promise<PublicStorePay
 
   if (!organization || organization.status !== "active") return null;
 
-  const config = resolveWebsiteConfig(rows, organization.name);
+  const config = resolveWebsiteConfig(rows, organization.name, organization.id);
   if (!config.platformEnabled || !config.enabled || config.slug !== slug || !isValidWhatsapp(config.whatsapp)) {
     return null;
   }
