@@ -49,3 +49,41 @@ export const auditQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
 });
+
+export const storeSlugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+export const storeSlugParamsSchema = z.object({
+  slug: z.string().trim().toLowerCase().min(3).max(64).regex(
+    storeSlugRegex,
+    "رابط المتجر يجب أن يحتوي على أحرف إنجليزية صغيرة وأرقام وشرطات فقط",
+  ),
+});
+
+export const websiteUpdateSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    slug: z.preprocess(
+      (value) => (typeof value === "string" ? value.trim().toLowerCase() : value),
+      z.string().min(3).max(64).regex(
+        storeSlugRegex,
+        "رابط المتجر يجب أن يحتوي على أحرف إنجليزية صغيرة وأرقام وشرطات فقط",
+      ).optional(),
+    ),
+    whatsapp: z.preprocess(
+      (value) => (typeof value === "string" ? value.trim() : value),
+      z.string().min(1, "رقم واتساب مطلوب").max(30).optional(),
+    ),
+    name: z.preprocess(
+      (value) => (typeof value === "string" ? value.trim() : value),
+      z.string().max(120).optional(),
+    ),
+    description: z.preprocess(
+      (value) => (typeof value === "string" ? value.trim() : value),
+      z.string().max(300).optional(),
+    ),
+  })
+  .refine((value) => Object.keys(value).length > 0, "يجب إرسال تعديل واحد على الأقل");
+
+export const platformWebsiteUpdateSchema = z.object({
+  platformEnabled: z.boolean(),
+});

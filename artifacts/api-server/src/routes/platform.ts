@@ -13,12 +13,18 @@ import {
   usersTable,
   validationError,
   idParamsSchema,
+  platformWebsiteUpdateSchema,
 } from "@workspace/db";
 import { and, asc, eq, inArray, min, or, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { requireAuth } from "../lib/session";
 import { requireSuperadmin } from "../lib/rbac";
 import { getRequestUser } from "../lib/request-user";
+import {
+  parseStoreBoolean,
+  STORE_PLATFORM_ENABLED_KEY,
+  upsertSetting,
+} from "../lib/store-settings";
 
 const router: IRouter = Router();
 const DEMO_ORG_ID = 1;
@@ -104,6 +110,80 @@ function orgStatusHandler(nextStatus: "active" | "suspended", action: "platform_
 
 router.post("/platform/orgs/:id/suspend", orgStatusHandler("suspended", "platform_suspend_org"));
 router.post("/platform/orgs/:id/unsuspend", orgStatusHandler("active", "platform_unsuspend_org"));
+
+router.get("/platform/websites", async (_req: Request, res: Response): Promise<void> => {
+  const [organizations, settings] = await Promise.all([
+    db
+      .select({
+        id: organizationsTable.id,
+        name: organizationsTable.name,
+        status: organizationsTable.status,
+      })
+      .from(organizationsTable)
+      .orderBy(asc(organizationsTable.createdAt)),
+    db
+      .select({ orgId: settingsTable.orgId, value: settingsTable.value })
+      .from(settingsTable)
+      .where(eq(settingsTable.key, STORE_PLATFORM_ENABLED_KEY)),
+  ]);
+
+  const settingByOrg = new Map(settings.map((row) => [row.orgId, row.value]));
+  res.json(organizations.map((organization) => ({
+    orgId: organization.id,
+    orgName: organization.name,
+    orgStatus: organization.status,
+    platformEnabled: parseStoreBoolean(settingByOrg.get(organization.id), true),
+  })));
+});
+
+router.patch("/platform/websites/:id", async (req: Request, res: Response): Promise<void> => {
+  const params = idParamsSchema.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: validationError(params.error) });
+    return;
+  }
+
+  const parsed = platformWebsiteUpdateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: validationError(parsed.error) });
+    return;
+  }
+
+  if (params.data.id === DEMO_ORG_ID) {
+    res.status(400).json({ error: "لا يمكن تغيير إعدادات النشاط التجريبي" });
+    return;
+  }
+
+  const actor = getRequestUser(req);
+  const orgId = params.data.id;
+  const updated = db.transaction((tx) => {
+    const organization = tx
+      .select({ id: organizationsTable.id, name: organizationsTable.name })
+      .from(organizationsTable)
+      .where(eq(organizationsTable.id, orgId))
+      .get();
+    if (!organization) return null;
+
+    upsertSetting(tx, orgId, STORE_PLATFORM_ENABLED_KEY, String(parsed.data.platformEnabled));
+    tx.insert(auditLogTable).values({
+      userId: actor.id,
+      orgId: null,
+      action: "platform_website_access_update",
+      entity: "organization",
+      entityId: orgId,
+      detail: `${parsed.data.platformEnabled ? "تفعيل" : "تعطيل"} ميزة الموقع للنشاط: ${organization.name}`,
+    }).run();
+
+    return organization.id;
+  });
+
+  if (!updated) {
+    res.status(404).json({ error: "النشاط غير موجود" });
+    return;
+  }
+
+  res.json({ ok: true });
+});
 
 router.post("/platform/orgs/:id/reset-owner-password", async (req: Request, res: Response): Promise<void> => {
   const params = idParamsSchema.safeParse(req.params);

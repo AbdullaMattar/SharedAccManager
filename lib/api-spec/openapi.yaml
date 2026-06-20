@@ -28,6 +28,10 @@ tags:
     description: Subscription operations
   - name: dashboard
     description: Dashboard and expiry operations
+  - name: website
+    description: Organization website settings
+  - name: store
+    description: Public store operations
   - name: settings
     description: Admin settings operations
   - name: users
@@ -790,6 +794,128 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ExpiringResult"
+
+  /store/{slug}:
+    get:
+      operationId: getPublicStore
+      tags: [store]
+      summary: Get a public store by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 64
+            pattern: "^[a-z0-9]+(?:-[a-z0-9]+){0,}$"
+      responses:
+        "200":
+          description: Public store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicStore"
+        "404":
+          description: Store not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /website:
+    get:
+      operationId: getWebsiteSettings
+      tags: [website]
+      summary: Get organization website settings (admin only)
+      responses:
+        "200":
+          description: Website settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebsiteSettings"
+    patch:
+      operationId: updateWebsiteSettings
+      tags: [website]
+      summary: Update organization website settings (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebsiteUpdate"
+      responses:
+        "200":
+          description: Updated website settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebsiteSettings"
+        "400":
+          description: Invalid input or missing required live settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Website feature unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Slug already used
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /platform/websites:
+    get:
+      operationId: listPlatformWebsites
+      tags: [platform]
+      summary: List platform website access states
+      responses:
+        "200":
+          description: Website access states
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlatformWebsiteOrg"
+
+  /platform/websites/{id}:
+    patch:
+      operationId: updatePlatformWebsite
+      tags: [platform]
+      summary: Update platform website access for an organization
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlatformWebsiteUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Organization not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /settings:
     get:
@@ -1654,6 +1780,102 @@ components:
           $ref: "#/components/schemas/Payment"
         previousSubscriptionId:
           type: integer
+
+    PublicStoreProduct:
+      type: object
+      required: [id, name, service, price, durationDays, freeSlotCount, available]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        service:
+          type: string
+        price:
+          type: number
+        durationDays:
+          type: integer
+        freeSlotCount:
+          type: integer
+        available:
+          type: boolean
+
+    PublicStore:
+      type: object
+      required: [name, description, whatsappNumber, currency, products]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        whatsappNumber:
+          type: string
+        currency:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublicStoreProduct"
+
+    WebsiteSettings:
+      type: object
+      required: [platformEnabled, enabled, slug, whatsapp, name, description, publicUrl]
+      properties:
+        platformEnabled:
+          type: boolean
+        enabled:
+          type: boolean
+        slug:
+          type: string
+        whatsapp:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        publicUrl:
+          type: ["string", "null"]
+
+    WebsiteUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        enabled:
+          type: boolean
+        slug:
+          type: string
+          minLength: 3
+          maxLength: 64
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+){0,}$"
+        whatsapp:
+          type: string
+        name:
+          type: string
+          maxLength: 120
+        description:
+          type: string
+          maxLength: 300
+
+    PlatformWebsiteOrg:
+      type: object
+      required: [orgId, orgName, orgStatus, platformEnabled]
+      properties:
+        orgId:
+          type: integer
+        orgName:
+          type: string
+        orgStatus:
+          type: string
+          enum: [active, suspended]
+        platformEnabled:
+          type: boolean
+
+    PlatformWebsiteUpdate:
+      type: object
+      required: [platformEnabled]
+      properties:
+        platformEnabled:
+          type: boolean
 
     Settings:
       type: object

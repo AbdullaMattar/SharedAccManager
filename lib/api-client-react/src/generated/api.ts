@@ -45,9 +45,12 @@ import type {
   PasswordResetInput,
   Payment,
   PlatformOrg,
+  PlatformWebsiteOrg,
+  PlatformWebsiteUpdate,
   Product,
   ProductInput,
   ProductUpdate,
+  PublicStore,
   RegisterInput,
   RenewalInput,
   RenewalResult,
@@ -65,7 +68,9 @@ import type {
   SubscriptionSummary,
   SuccessResponse,
   UserCreateInput,
-  UserUpdateInput
+  UserUpdateInput,
+  WebsiteSettings,
+  WebsiteUpdate
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -2624,6 +2629,380 @@ export function useListExpiringSubscriptions<TData = Awaited<ReturnType<typeof l
 
 
 
+
+export const getGetPublicStoreUrl = (slug: string,) => {
+
+
+
+
+  return `/api/store/${slug}`
+}
+
+/**
+ * @summary Get a public store by slug
+ */
+export const getPublicStore = async (slug: string, options?: RequestInit): Promise<PublicStore> => {
+
+  return customFetch<PublicStore>(getGetPublicStoreUrl(slug),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPublicStoreQueryKey = (slug: string,) => {
+    return [
+    `/api/store/${slug}`
+    ] as const;
+    }
+
+
+export const getGetPublicStoreQueryOptions = <TData = Awaited<ReturnType<typeof getPublicStore>>, TError = ErrorType<ErrorResponse>>(slug: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicStore>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPublicStoreQueryKey(slug);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicStore>>> = ({ signal }) => getPublicStore(slug, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(slug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPublicStore>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPublicStoreQueryResult = NonNullable<Awaited<ReturnType<typeof getPublicStore>>>
+export type GetPublicStoreQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Get a public store by slug
+ */
+
+export function useGetPublicStore<TData = Awaited<ReturnType<typeof getPublicStore>>, TError = ErrorType<ErrorResponse>>(
+ slug: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicStore>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPublicStoreQueryOptions(slug,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetWebsiteSettingsUrl = () => {
+
+
+
+
+  return `/api/website`
+}
+
+/**
+ * @summary Get organization website settings (admin only)
+ */
+export const getWebsiteSettings = async ( options?: RequestInit): Promise<WebsiteSettings> => {
+
+  return customFetch<WebsiteSettings>(getGetWebsiteSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetWebsiteSettingsQueryKey = () => {
+    return [
+    `/api/website`
+    ] as const;
+    }
+
+
+export const getGetWebsiteSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getWebsiteSettings>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWebsiteSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetWebsiteSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWebsiteSettings>>> = ({ signal }) => getWebsiteSettings({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWebsiteSettings>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetWebsiteSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getWebsiteSettings>>>
+export type GetWebsiteSettingsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get organization website settings (admin only)
+ */
+
+export function useGetWebsiteSettings<TData = Awaited<ReturnType<typeof getWebsiteSettings>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWebsiteSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetWebsiteSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpdateWebsiteSettingsUrl = () => {
+
+
+
+
+  return `/api/website`
+}
+
+/**
+ * @summary Update organization website settings (admin only)
+ */
+export const updateWebsiteSettings = async (websiteUpdate: WebsiteUpdate, options?: RequestInit): Promise<WebsiteSettings> => {
+
+  return customFetch<WebsiteSettings>(getUpdateWebsiteSettingsUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      websiteUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdateWebsiteSettingsMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateWebsiteSettings>>, TError,{data: BodyType<WebsiteUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateWebsiteSettings>>, TError,{data: BodyType<WebsiteUpdate>}, TContext> => {
+
+const mutationKey = ['updateWebsiteSettings'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateWebsiteSettings>>, {data: BodyType<WebsiteUpdate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateWebsiteSettings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateWebsiteSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof updateWebsiteSettings>>>
+    export type UpdateWebsiteSettingsMutationBody = BodyType<WebsiteUpdate>
+    export type UpdateWebsiteSettingsMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update organization website settings (admin only)
+ */
+export const useUpdateWebsiteSettings = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateWebsiteSettings>>, TError,{data: BodyType<WebsiteUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateWebsiteSettings>>,
+        TError,
+        {data: BodyType<WebsiteUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateWebsiteSettingsMutationOptions(options));
+    }
+
+export const getListPlatformWebsitesUrl = () => {
+
+
+
+
+  return `/api/platform/websites`
+}
+
+/**
+ * @summary List platform website access states
+ */
+export const listPlatformWebsites = async ( options?: RequestInit): Promise<PlatformWebsiteOrg[]> => {
+
+  return customFetch<PlatformWebsiteOrg[]>(getListPlatformWebsitesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPlatformWebsitesQueryKey = () => {
+    return [
+    `/api/platform/websites`
+    ] as const;
+    }
+
+
+export const getListPlatformWebsitesQueryOptions = <TData = Awaited<ReturnType<typeof listPlatformWebsites>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPlatformWebsites>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPlatformWebsitesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPlatformWebsites>>> = ({ signal }) => listPlatformWebsites({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPlatformWebsites>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListPlatformWebsitesQueryResult = NonNullable<Awaited<ReturnType<typeof listPlatformWebsites>>>
+export type ListPlatformWebsitesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List platform website access states
+ */
+
+export function useListPlatformWebsites<TData = Awaited<ReturnType<typeof listPlatformWebsites>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPlatformWebsites>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListPlatformWebsitesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpdatePlatformWebsiteUrl = (id: number,) => {
+
+
+
+
+  return `/api/platform/websites/${id}`
+}
+
+/**
+ * @summary Update platform website access for an organization
+ */
+export const updatePlatformWebsite = async (id: number,
+    platformWebsiteUpdate: PlatformWebsiteUpdate, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getUpdatePlatformWebsiteUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      platformWebsiteUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdatePlatformWebsiteMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePlatformWebsite>>, TError,{id: number;data: BodyType<PlatformWebsiteUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePlatformWebsite>>, TError,{id: number;data: BodyType<PlatformWebsiteUpdate>}, TContext> => {
+
+const mutationKey = ['updatePlatformWebsite'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePlatformWebsite>>, {id: number;data: BodyType<PlatformWebsiteUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updatePlatformWebsite(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePlatformWebsiteMutationResult = NonNullable<Awaited<ReturnType<typeof updatePlatformWebsite>>>
+    export type UpdatePlatformWebsiteMutationBody = BodyType<PlatformWebsiteUpdate>
+    export type UpdatePlatformWebsiteMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update platform website access for an organization
+ */
+export const useUpdatePlatformWebsite = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePlatformWebsite>>, TError,{id: number;data: BodyType<PlatformWebsiteUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updatePlatformWebsite>>,
+        TError,
+        {id: number;data: BodyType<PlatformWebsiteUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdatePlatformWebsiteMutationOptions(options));
+    }
 
 export const getGetSettingsUrl = () => {
 

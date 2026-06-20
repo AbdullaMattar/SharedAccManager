@@ -741,6 +741,112 @@ export const ListExpiringSubscriptionsResponse = zod.object({
 
 
 /**
+ * @summary Get a public store by slug
+ */
+export const getPublicStorePathSlugMin = 3;
+export const getPublicStorePathSlugMax = 64;
+
+
+export const getPublicStorePathSlugRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+){0,}$');
+
+
+export const GetPublicStoreParams = zod.object({
+  "slug": zod.coerce.string().min(getPublicStorePathSlugMin).max(getPublicStorePathSlugMax).regex(getPublicStorePathSlugRegExp)
+})
+
+export const GetPublicStoreResponse = zod.object({
+  "name": zod.string(),
+  "description": zod.string(),
+  "whatsappNumber": zod.string(),
+  "currency": zod.string(),
+  "products": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "service": zod.string(),
+  "price": zod.number(),
+  "durationDays": zod.number(),
+  "freeSlotCount": zod.number(),
+  "available": zod.boolean()
+}))
+})
+
+
+/**
+ * @summary Get organization website settings (admin only)
+ */
+export const GetWebsiteSettingsResponse = zod.object({
+  "platformEnabled": zod.boolean(),
+  "enabled": zod.boolean(),
+  "slug": zod.string(),
+  "whatsapp": zod.string(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "publicUrl": zod.string().nullable()
+})
+
+
+/**
+ * @summary Update organization website settings (admin only)
+ */
+export const updateWebsiteSettingsBodySlugMin = 3;
+export const updateWebsiteSettingsBodySlugMax = 64;
+
+
+export const updateWebsiteSettingsBodySlugRegExp = new RegExp('^[a-z0-9]+(?:-[a-z0-9]+){0,}$');
+export const updateWebsiteSettingsBodyNameMax = 120;
+
+export const updateWebsiteSettingsBodyDescriptionMax = 300;
+
+
+
+export const UpdateWebsiteSettingsBody = zod.object({
+  "enabled": zod.boolean().optional(),
+  "slug": zod.string().min(updateWebsiteSettingsBodySlugMin).max(updateWebsiteSettingsBodySlugMax).regex(updateWebsiteSettingsBodySlugRegExp).optional(),
+  "whatsapp": zod.string().optional(),
+  "name": zod.string().max(updateWebsiteSettingsBodyNameMax).optional(),
+  "description": zod.string().max(updateWebsiteSettingsBodyDescriptionMax).optional()
+})
+
+export const UpdateWebsiteSettingsResponse = zod.object({
+  "platformEnabled": zod.boolean(),
+  "enabled": zod.boolean(),
+  "slug": zod.string(),
+  "whatsapp": zod.string(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "publicUrl": zod.string().nullable()
+})
+
+
+/**
+ * @summary List platform website access states
+ */
+export const ListPlatformWebsitesResponseItem = zod.object({
+  "orgId": zod.number(),
+  "orgName": zod.string(),
+  "orgStatus": zod.enum(['active', 'suspended']),
+  "platformEnabled": zod.boolean()
+})
+export const ListPlatformWebsitesResponse = zod.array(ListPlatformWebsitesResponseItem)
+
+
+/**
+ * @summary Update platform website access for an organization
+ */
+export const UpdatePlatformWebsiteParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdatePlatformWebsiteBody = zod.object({
+  "platformEnabled": zod.boolean()
+})
+
+export const UpdatePlatformWebsiteResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
  * @summary Get live settings (admin only)
  */
 export const GetSettingsResponse = zod.object({

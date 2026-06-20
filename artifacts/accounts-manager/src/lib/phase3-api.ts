@@ -42,6 +42,43 @@ export type PlatformOrg = {
   paymentsCount: number;
 };
 
+export type PublicStoreProduct = {
+  id: number;
+  name: string;
+  service: string;
+  price: number;
+  durationDays: number;
+  freeSlotCount: number;
+  available: boolean;
+};
+
+export type PublicStore = {
+  name: string;
+  description: string;
+  whatsappNumber: string;
+  currency: string;
+  products: PublicStoreProduct[];
+};
+
+export type WebsiteSettings = {
+  platformEnabled: boolean;
+  enabled: boolean;
+  slug: string;
+  whatsapp: string;
+  name: string;
+  description: string;
+  publicUrl: string | null;
+};
+
+export type WebsiteUpdate = Partial<Pick<WebsiteSettings, "enabled" | "slug" | "whatsapp" | "name" | "description">>;
+
+export type PlatformWebsiteOrg = {
+  orgId: number;
+  orgName: string;
+  orgStatus: "active" | "suspended";
+  platformEnabled: boolean;
+};
+
 type RawSubscription = { id: number; customerName: string; customerPhone: string; customerWhatsapp?: string | null; productName: string; accountLabel: string; expiryDate: string; price: number; productDefaultDurationDays: number };
 const normalizeSubscription = (item: RawSubscription): ExpiringSubscription => ({
   ...item, phone: item.customerPhone, whatsapp: item.customerWhatsapp, defaultDurationDays: item.productDefaultDurationDays,
@@ -122,3 +159,34 @@ export async function downloadBackup(passphrase: string): Promise<void> {
   anchor.remove();
   URL.revokeObjectURL(url);
 }
+
+export const useGetPublicStore = (slug: string) => useQuery({
+  queryKey: ["store", slug],
+  queryFn: () => request<PublicStore>(`/api/store/${encodeURIComponent(slug)}`),
+  retry: false,
+});
+
+export const useGetWebsiteSettings = () => useQuery({
+  queryKey: ["website"],
+  queryFn: () => request<WebsiteSettings>("/api/website"),
+});
+
+export const useUpdateWebsiteSettings = () => useMutation({
+  mutationFn: (data: WebsiteUpdate) => request<WebsiteSettings>("/api/website", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  }),
+});
+
+export const usePlatformWebsites = () => useQuery({
+  queryKey: ["platform", "websites"],
+  queryFn: () => request<PlatformWebsiteOrg[]>("/api/platform/websites"),
+});
+
+export const useUpdatePlatformWebsite = () => useMutation({
+  mutationFn: ({ orgId, platformEnabled }: { orgId: number; platformEnabled: boolean }) =>
+    request<{ ok: true }>(`/api/platform/websites/${orgId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ platformEnabled }),
+    }),
+});

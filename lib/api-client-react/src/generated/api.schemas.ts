@@ -438,6 +438,69 @@ export interface RenewalResult {
   previousSubscriptionId: number;
 }
 
+export interface PublicStoreProduct {
+  id: number;
+  name: string;
+  service: string;
+  price: number;
+  durationDays: number;
+  freeSlotCount: number;
+  available: boolean;
+}
+
+export interface PublicStore {
+  name: string;
+  description: string;
+  whatsappNumber: string;
+  currency: string;
+  products: PublicStoreProduct[];
+}
+
+export interface WebsiteSettings {
+  platformEnabled: boolean;
+  enabled: boolean;
+  slug: string;
+  whatsapp: string;
+  name: string;
+  description: string;
+  /** @nullable */
+  publicUrl: string | null;
+}
+
+export interface WebsiteUpdate {
+  enabled?: boolean;
+  /**
+     * @minLength 3
+     * @maxLength 64
+     * @pattern ^[a-z0-9]+(?:-[a-z0-9]+){0,}$
+     */
+  slug?: string;
+  whatsapp?: string;
+  /** @maxLength 120 */
+  name?: string;
+  /** @maxLength 300 */
+  description?: string;
+}
+
+export type PlatformWebsiteOrgOrgStatus = typeof PlatformWebsiteOrgOrgStatus[keyof typeof PlatformWebsiteOrgOrgStatus];
+
+
+export const PlatformWebsiteOrgOrgStatus = {
+  active: 'active',
+  suspended: 'suspended',
+} as const;
+
+export interface PlatformWebsiteOrg {
+  orgId: number;
+  orgName: string;
+  orgStatus: PlatformWebsiteOrgOrgStatus;
+  platformEnabled: boolean;
+}
+
+export interface PlatformWebsiteUpdate {
+  platformEnabled: boolean;
+}
+
 export type SettingsReminderRecipient = typeof SettingsReminderRecipient[keyof typeof SettingsReminderRecipient];
 
 

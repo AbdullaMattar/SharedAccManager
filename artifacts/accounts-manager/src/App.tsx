@@ -7,6 +7,9 @@ import { AuthGuard } from "@/components/auth-guard";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import About from "@/pages/about";
+import StorePage from "@/pages/store";
+import WebsitePage from "@/pages/website";
+import PlatformWebsitesPage from "@/pages/platform-websites";
 import Inventory from "@/pages/inventory";
 import Customers from "@/pages/customers";
 import CustomerDetail from "@/pages/customer-detail";
@@ -33,6 +36,9 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/about" component={About} />
+      <Route path="/store/:slug">
+        {(params) => <StorePage slug={params.slug} />}
+      </Route>
       <Route path="/">
         <AuthGuard>
           {user?.role === "superadmin" ? <PlatformPage /> : <OrgGuard><Dashboard /></OrgGuard>}
@@ -63,11 +69,13 @@ function Router() {
       <Route path="/subscriptions"><AuthGuard><OrgGuard><Subscriptions /></OrgGuard></AuthGuard></Route>
       <Route path="/sale/new"><AuthGuard><OrgGuard><NewSale /></OrgGuard></AuthGuard></Route>
       <Route path="/expiring"><AuthGuard><OrgGuard><Expiring /></OrgGuard></AuthGuard></Route>
+      <Route path="/admin/website"><AuthGuard><OrgGuard><AdminGuard><WebsitePage /></AdminGuard></OrgGuard></AuthGuard></Route>
       <Route path="/admin/settings"><AuthGuard><OrgGuard><AdminGuard><Settings /></AdminGuard></OrgGuard></AuthGuard></Route>
       <Route path="/admin/users"><AuthGuard><OrgGuard><AdminGuard><Users /></AdminGuard></OrgGuard></AuthGuard></Route>
       <Route path="/admin/audit"><AuthGuard><OrgGuard><AdminGuard><Audit /></AdminGuard></OrgGuard></AuthGuard></Route>
       <Route path="/admin/data-security"><AuthGuard><OrgGuard><AdminGuard><DataSecurity /></AdminGuard></OrgGuard></AuthGuard></Route>
       <Route path="/platform"><AuthGuard><SuperadminGuard><PlatformPage /></SuperadminGuard></AuthGuard></Route>
+      <Route path="/platform/websites"><AuthGuard><SuperadminGuard><PlatformWebsitesPage /></SuperadminGuard></AuthGuard></Route>
       <Route component={NotFound} />
     </Switch>
   );

@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useLogout } from "@workspace/api-client-react";
 import { strings } from "@/lib/strings";
-import { Package, LogOut, Menu, UserRound, ReceiptText, ShoppingCart, LayoutDashboard, CalendarClock, Settings, ShieldCheck, Loader2, Info, DatabaseBackup } from "lucide-react";
+import { Package, LogOut, Menu, UserRound, ReceiptText, ShoppingCart, LayoutDashboard, CalendarClock, Settings, ShieldCheck, Loader2, Info, DatabaseBackup, Globe2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -31,6 +31,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const navItems = user?.role === "superadmin" ? [
     { href: "/platform", label: "إدارة المنصة", icon: ShieldCheck },
+    { href: "/platform/websites", label: strings.website.platformWebsites, icon: Globe2 },
   ] : [
     { href: "/", label: strings.phase3.dashboard, icon: LayoutDashboard },
     { href: "/expiring", label: strings.phase3.expiringSoon, icon: CalendarClock },
@@ -39,6 +40,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/customers", label: strings.nav.customers, icon: UserRound },
     { href: "/subscriptions", label: strings.nav.subscriptions, icon: ReceiptText },
     ...(user?.role === "admin" ? [
+      { href: "/admin/website", label: strings.website.nav, icon: Globe2 },
       { href: "/admin/settings", label: strings.phase3.settings, icon: Settings },
       { href: "/admin/users", label: strings.phase3.users, icon: ShieldCheck },
       { href: "/admin/audit", label: strings.phase3.audit, icon: ReceiptText },
@@ -59,7 +61,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               ["/inventory", "/products", "/accounts"].some(
                 (path) => location === path || location.startsWith(`${path}/`),
               );
-            const isActive = item.href === "/" ? location === "/" : isInventoryRoute || location === item.href || location.startsWith(`${item.href}/`);
+            const isActive = item.href === "/" ? location === "/" : isInventoryRoute || location === item.href || (item.href !== "/platform" && location.startsWith(`${item.href}/`));
             return (
               <Link key={item.href} href={item.href} className={`flex min-h-11 items-center gap-3 rounded-md px-3 py-2 transition-colors ${isActive ? "bg-primary text-primary-foreground" : item.prominent ? "bg-[#6ACDBD] text-[#0E2C51] hover:bg-[#58c0af]" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"} ${item.prominent ? "mb-3 shadow-sm" : ""}`} data-testid={`nav-${item.href}`}>
                 <item.icon className="h-5 w-5" />

@@ -12,6 +12,8 @@ import expiringRouter from "./expiring";
 import settingsRouter from "./settings";
 import usersRouter from "./users";
 import reportsRouter from "./reports";
+import storeRouter from "./store";
+import websiteRouter from "./website";
 import platformRouter from "./platform";
 import backupRouter from "./backup";
 
@@ -30,6 +32,8 @@ router.use(expiringRouter);
 router.use(settingsRouter);
 router.use(usersRouter);
 router.use(reportsRouter);
+router.use(storeRouter);
+router.use(websiteRouter);
 router.use(platformRouter);
 router.use(backupRouter);
 
