@@ -5,6 +5,7 @@
  * Shared Accounts Manager API
  * OpenAPI spec version: 0.1.0
  */
+import type { ProductStoreMeta } from './productStoreMeta';
 
 export interface WebsiteSettings {
   platformEnabled: boolean;
@@ -15,4 +16,5 @@ export interface WebsiteSettings {
   description: string;
   /** @nullable */
   publicUrl: string | null;
+  products: ProductStoreMeta[];
 }

@@ -446,6 +446,10 @@ export interface PublicStoreProduct {
   durationDays: number;
   freeSlotCount: number;
   available: boolean;
+  displayName: string;
+  description: string;
+  /** @nullable */
+  imageUrl: string | null;
 }
 
 export interface PublicStore {
@@ -454,6 +458,16 @@ export interface PublicStore {
   whatsappNumber: string;
   currency: string;
   products: PublicStoreProduct[];
+}
+
+export interface ProductStoreMeta {
+  id: number;
+  productName: string;
+  service: string;
+  displayName: string;
+  description: string;
+  /** @nullable */
+  imageUrl: string | null;
 }
 
 export interface WebsiteSettings {
@@ -465,6 +479,7 @@ export interface WebsiteSettings {
   description: string;
   /** @nullable */
   publicUrl: string | null;
+  products: ProductStoreMeta[];
 }
 
 export interface WebsiteUpdate {
@@ -480,6 +495,19 @@ export interface WebsiteUpdate {
   name?: string;
   /** @maxLength 300 */
   description?: string;
+}
+
+export interface ProductStoreMetaUpdate {
+  name?: string;
+  description?: string;
+}
+
+export interface ProductImageUpload {
+  image: Blob;
+}
+
+export interface ProductImageUploadResponse {
+  imageUrl: string;
 }
 
 export type PlatformWebsiteOrgOrgStatus = typeof PlatformWebsiteOrgOrgStatus[keyof typeof PlatformWebsiteOrgOrgStatus];

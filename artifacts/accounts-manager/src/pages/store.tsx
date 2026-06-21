@@ -20,24 +20,37 @@ function ProductCard({
   currency: string;
 }) {
   const price = `${product.price} ${currency}`;
+  const displayName = product.displayName || product.name;
   const message = product.available
-    ? strings.store.orderMessage(product.name, price, product.durationDays)
-    : strings.store.availabilityMessage(product.name);
+    ? strings.store.orderMessage(displayName, price, product.durationDays)
+    : strings.store.availabilityMessage(displayName);
 
   return (
-    <Card className="h-full">
+    <Card className="h-full flex flex-col">
+      {product.imageUrl ? (
+        <div className="overflow-hidden rounded-t-lg">
+          <img
+            src={product.imageUrl}
+            alt={displayName}
+            className="aspect-video w-full object-cover"
+          />
+        </div>
+      ) : null}
       <CardHeader className="space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <CardTitle className="text-lg leading-7">{product.name}</CardTitle>
+            <CardTitle className="text-lg leading-7">{displayName}</CardTitle>
             <p className="text-sm text-muted-foreground">{product.service}</p>
           </div>
           <Badge variant={product.available ? "default" : "secondary"}>
             {product.available ? strings.store.available : strings.store.unavailable}
           </Badge>
         </div>
+        {product.description ? (
+          <p className="text-sm text-muted-foreground leading-6">{product.description}</p>
+        ) : null}
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 mt-auto">
         <div className="flex items-center justify-between rounded-md bg-muted px-3 py-2 text-sm">
           <span>{price}</span>
           <span>{strings.store.durationDays(product.durationDays)}</span>

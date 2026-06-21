@@ -48,7 +48,11 @@ import type {
   PlatformWebsiteOrg,
   PlatformWebsiteUpdate,
   Product,
+  ProductImageUpload,
+  ProductImageUploadResponse,
   ProductInput,
+  ProductStoreMeta,
+  ProductStoreMetaUpdate,
   ProductUpdate,
   PublicStore,
   RegisterInput,
@@ -2853,6 +2857,222 @@ export const useUpdateWebsiteSettings = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getUpdateWebsiteSettingsMutationOptions(options));
+    }
+
+export const getUpdateWebsiteProductUrl = (id: number,) => {
+
+
+
+
+  return `/api/website/products/${id}`
+}
+
+/**
+ * @summary Update public store metadata for one product
+ */
+export const updateWebsiteProduct = async (id: number,
+    productStoreMetaUpdate: ProductStoreMetaUpdate, options?: RequestInit): Promise<ProductStoreMeta> => {
+
+  return customFetch<ProductStoreMeta>(getUpdateWebsiteProductUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      productStoreMetaUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdateWebsiteProductMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateWebsiteProduct>>, TError,{id: number;data: BodyType<ProductStoreMetaUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateWebsiteProduct>>, TError,{id: number;data: BodyType<ProductStoreMetaUpdate>}, TContext> => {
+
+const mutationKey = ['updateWebsiteProduct'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateWebsiteProduct>>, {id: number;data: BodyType<ProductStoreMetaUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateWebsiteProduct(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateWebsiteProductMutationResult = NonNullable<Awaited<ReturnType<typeof updateWebsiteProduct>>>
+    export type UpdateWebsiteProductMutationBody = BodyType<ProductStoreMetaUpdate>
+    export type UpdateWebsiteProductMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Update public store metadata for one product
+ */
+export const useUpdateWebsiteProduct = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateWebsiteProduct>>, TError,{id: number;data: BodyType<ProductStoreMetaUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateWebsiteProduct>>,
+        TError,
+        {id: number;data: BodyType<ProductStoreMetaUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateWebsiteProductMutationOptions(options));
+    }
+
+export const getUploadWebsiteProductImageUrl = (id: number,) => {
+
+
+
+
+  return `/api/website/products/${id}/image`
+}
+
+/**
+ * @summary Upload public store image for one product
+ */
+export const uploadWebsiteProductImage = async (id: number,
+    productImageUpload: ProductImageUpload, options?: RequestInit): Promise<ProductImageUploadResponse> => {
+    const formData = new FormData();
+formData.append(`image`, productImageUpload.image);
+
+  return customFetch<ProductImageUploadResponse>(getUploadWebsiteProductImageUrl(id),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body:
+      formData,
+  }
+);}
+
+
+
+
+export const getUploadWebsiteProductImageMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadWebsiteProductImage>>, TError,{id: number;data: BodyType<ProductImageUpload>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadWebsiteProductImage>>, TError,{id: number;data: BodyType<ProductImageUpload>}, TContext> => {
+
+const mutationKey = ['uploadWebsiteProductImage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadWebsiteProductImage>>, {id: number;data: BodyType<ProductImageUpload>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  uploadWebsiteProductImage(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadWebsiteProductImageMutationResult = NonNullable<Awaited<ReturnType<typeof uploadWebsiteProductImage>>>
+    export type UploadWebsiteProductImageMutationBody = BodyType<ProductImageUpload>
+    export type UploadWebsiteProductImageMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Upload public store image for one product
+ */
+export const useUploadWebsiteProductImage = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadWebsiteProductImage>>, TError,{id: number;data: BodyType<ProductImageUpload>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadWebsiteProductImage>>,
+        TError,
+        {id: number;data: BodyType<ProductImageUpload>},
+        TContext
+      > => {
+      return useMutation(getUploadWebsiteProductImageMutationOptions(options));
+    }
+
+export const getDeleteWebsiteProductImageUrl = (id: number,) => {
+
+
+
+
+  return `/api/website/products/${id}/image`
+}
+
+/**
+ * @summary Delete public store image for one product
+ */
+export const deleteWebsiteProductImage = async (id: number, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeleteWebsiteProductImageUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteWebsiteProductImageMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteWebsiteProductImage>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteWebsiteProductImage>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteWebsiteProductImage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteWebsiteProductImage>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteWebsiteProductImage(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteWebsiteProductImageMutationResult = NonNullable<Awaited<ReturnType<typeof deleteWebsiteProductImage>>>
+
+    export type DeleteWebsiteProductImageMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Delete public store image for one product
+ */
+export const useDeleteWebsiteProductImage = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteWebsiteProductImage>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteWebsiteProductImage>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteWebsiteProductImageMutationOptions(options));
     }
 
 export const getListPlatformWebsitesUrl = () => {

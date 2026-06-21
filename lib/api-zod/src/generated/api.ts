@@ -766,7 +766,10 @@ export const GetPublicStoreResponse = zod.object({
   "price": zod.number(),
   "durationDays": zod.number(),
   "freeSlotCount": zod.number(),
-  "available": zod.boolean()
+  "available": zod.boolean(),
+  "displayName": zod.string(),
+  "description": zod.string(),
+  "imageUrl": zod.string().nullable()
 }))
 })
 
@@ -781,7 +784,15 @@ export const GetWebsiteSettingsResponse = zod.object({
   "whatsapp": zod.string(),
   "name": zod.string(),
   "description": zod.string(),
-  "publicUrl": zod.string().nullable()
+  "publicUrl": zod.string().nullable(),
+  "products": zod.array(zod.object({
+  "id": zod.number(),
+  "productName": zod.string(),
+  "service": zod.string(),
+  "displayName": zod.string(),
+  "description": zod.string(),
+  "imageUrl": zod.string().nullable()
+}))
 })
 
 
@@ -814,7 +825,65 @@ export const UpdateWebsiteSettingsResponse = zod.object({
   "whatsapp": zod.string(),
   "name": zod.string(),
   "description": zod.string(),
-  "publicUrl": zod.string().nullable()
+  "publicUrl": zod.string().nullable(),
+  "products": zod.array(zod.object({
+  "id": zod.number(),
+  "productName": zod.string(),
+  "service": zod.string(),
+  "displayName": zod.string(),
+  "description": zod.string(),
+  "imageUrl": zod.string().nullable()
+}))
+})
+
+
+/**
+ * @summary Update public store metadata for one product
+ */
+export const UpdateWebsiteProductParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateWebsiteProductBody = zod.object({
+  "name": zod.string().optional(),
+  "description": zod.string().optional()
+})
+
+export const UpdateWebsiteProductResponse = zod.object({
+  "id": zod.number(),
+  "productName": zod.string(),
+  "service": zod.string(),
+  "displayName": zod.string(),
+  "description": zod.string(),
+  "imageUrl": zod.string().nullable()
+})
+
+
+/**
+ * @summary Upload public store image for one product
+ */
+export const UploadWebsiteProductImageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UploadWebsiteProductImageBody = zod.object({
+  "image": zod.instanceof(File)
+})
+
+export const UploadWebsiteProductImageResponse = zod.object({
+  "imageUrl": zod.string()
+})
+
+
+/**
+ * @summary Delete public store image for one product
+ */
+export const DeleteWebsiteProductImageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteWebsiteProductImageResponse = zod.object({
+  "ok": zod.boolean()
 })
 
 

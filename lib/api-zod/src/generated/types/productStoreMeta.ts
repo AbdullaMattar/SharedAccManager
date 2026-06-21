@@ -6,14 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface PublicStoreProduct {
+export interface ProductStoreMeta {
   id: number;
-  name: string;
+  productName: string;
   service: string;
-  price: number;
-  durationDays: number;
-  freeSlotCount: number;
-  available: boolean;
   displayName: string;
   description: string;
   /** @nullable */

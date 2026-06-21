@@ -3,7 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import path from "path";
-import { existsSync } from "fs";
+import { existsSync, mkdirSync } from "fs";
 import { rateLimit } from "express-rate-limit";
 import router from "./routes";
 import { logger } from "./lib/logger";
@@ -100,6 +100,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use("/api", router);
+
+// Serve uploaded store images
+const storeImagesDir = path.resolve(process.cwd(), "data", "store-images");
+mkdirSync(storeImagesDir, { recursive: true });
+app.use("/store-images", express.static(storeImagesDir));
 
 // API 404 handler
 app.use("/api", (_req, res) => {

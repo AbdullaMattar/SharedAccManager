@@ -50,6 +50,18 @@ export type PublicStoreProduct = {
   durationDays: number;
   freeSlotCount: number;
   available: boolean;
+  displayName: string;
+  description: string;
+  imageUrl: string | null;
+};
+
+export type ProductStoreMeta = {
+  id: number;
+  productName: string;
+  service: string;
+  displayName: string;
+  description: string;
+  imageUrl: string | null;
 };
 
 export type PublicStore = {
@@ -68,6 +80,7 @@ export type WebsiteSettings = {
   name: string;
   description: string;
   publicUrl: string | null;
+  products: ProductStoreMeta[];
 };
 
 export type WebsiteUpdate = Partial<Pick<WebsiteSettings, "enabled" | "slug" | "whatsapp" | "name" | "description">>;
@@ -189,4 +202,32 @@ export const useUpdatePlatformWebsite = () => useMutation({
       method: "PATCH",
       body: JSON.stringify({ platformEnabled }),
     }),
+});
+
+export const useUpdateProductMeta = () => useMutation({
+  mutationFn: ({ productId, name, description }: { productId: number; name?: string; description?: string }) =>
+    request<ProductStoreMeta>(`/api/website/products/${productId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name, description }),
+    }),
+});
+
+export const useUploadProductImage = () => useMutation({
+  mutationFn: ({ productId, file }: { productId: number; file: File }) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    return fetch(`/api/website/products/${productId}/image`, {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+    }).then(async (res) => {
+      if (!res.ok) throw new Error(await res.text());
+      return res.json() as Promise<{ imageUrl: string }>;
+    });
+  },
+});
+
+export const useDeleteProductImage = () => useMutation({
+  mutationFn: (productId: number) =>
+    request<{ ok: true }>(`/api/website/products/${productId}/image`, { method: "DELETE" }),
 });
