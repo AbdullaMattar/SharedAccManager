@@ -10,10 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
   useDeleteProductImage,
+  useDeleteStoreLogo,
   useGetWebsiteSettings,
   useUpdateProductMeta,
   useUpdateWebsiteSettings,
   useUploadProductImage,
+  useUploadStoreLogo,
   type ProductStoreMeta,
   type WebsiteSettings,
 } from "@/lib/phase3-api";
@@ -27,6 +29,7 @@ const emptyForm: WebsiteSettings = {
   name: "",
   description: "",
   publicUrl: null,
+  logoUrl: null,
   products: [],
 };
 
@@ -50,6 +53,9 @@ export default function WebsitePage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [form, setForm] = useState<WebsiteSettings>(emptyForm);
+  const logoFileRef = useRef<HTMLInputElement>(null);
+  const uploadLogo = useUploadStoreLogo();
+  const deleteLogo = useDeleteStoreLogo();
 
   useEffect(() => {
     if (data) setForm(data);
@@ -79,6 +85,39 @@ export default function WebsitePage() {
           : strings.website.saveError;
         toast({ title: message, variant: "destructive" });
       },
+    });
+  };
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["website"] });
+
+  const handleLogoFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: strings.website.productImageTooLarge, variant: "destructive" });
+      event.target.value = "";
+      return;
+    }
+
+    uploadLogo.mutate(file, {
+      onSuccess: (res) => {
+        setForm((current) => ({ ...current, logoUrl: res.imageUrl }));
+        toast({ title: strings.website.logoUploaded });
+        invalidate();
+      },
+      onError: () => toast({ title: strings.website.logoUploadError, variant: "destructive" }),
+    });
+    event.target.value = "";
+  };
+
+  const handleDeleteLogo = () => {
+    deleteLogo.mutate(undefined, {
+      onSuccess: () => {
+        setForm((current) => ({ ...current, logoUrl: null }));
+        toast({ title: strings.website.logoDeleted });
+        invalidate();
+      },
+      onError: () => toast({ title: strings.website.logoDeleteError, variant: "destructive" }),
     });
   };
 
@@ -158,6 +197,31 @@ export default function WebsitePage() {
               onChange={(event) => setForm({ ...form, description: event.target.value })}
               rows={4}
             />
+          </Field>
+
+          <Field label={strings.website.logo} hint={strings.website.logoHint}>
+            <div className="flex flex-wrap items-center gap-3 rounded-md border p-3">
+              {form.logoUrl ? (
+                <img src={form.logoUrl} alt={form.name || strings.website.name} className="size-16 rounded-md border bg-muted object-contain p-1" />
+              ) : (
+                <div className="grid size-16 place-items-center rounded-md border border-dashed bg-muted text-muted-foreground">
+                  <ImagePlus className="h-5 w-5" />
+                </div>
+              )}
+              <div className="flex flex-1 flex-wrap gap-2">
+                <Button type="button" variant="outline" onClick={() => logoFileRef.current?.click()} disabled={uploadLogo.isPending}>
+                  {uploadLogo.isPending ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : <ImagePlus className="me-2 h-4 w-4" />}
+                  {strings.website.uploadLogo}
+                </Button>
+                {form.logoUrl ? (
+                  <Button type="button" variant="ghost" className="text-destructive hover:text-destructive" onClick={handleDeleteLogo} disabled={deleteLogo.isPending}>
+                    <Trash2 className="me-2 h-4 w-4" />
+                    {strings.website.deleteLogo}
+                  </Button>
+                ) : null}
+              </div>
+              <input ref={logoFileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleLogoFileChange} />
+            </div>
           </Field>
 
           <Button className="min-h-11" onClick={save} disabled={update.isPending}>

@@ -107,11 +107,22 @@ export default function StorePage({ slug }: { slug: string }) {
   return (
     <main className="min-h-screen bg-background px-4 py-8" dir="rtl">
       <div className="mx-auto max-w-5xl space-y-8">
-        <header className="space-y-3 border-b pb-6">
-          <h1 className="text-3xl font-bold tracking-normal">{data.name}</h1>
-          {data.description ? (
-            <p className="max-w-2xl text-sm leading-7 text-muted-foreground">{data.description}</p>
-          ) : null}
+        <header className="border-b pb-6">
+          <div className="flex items-center gap-4">
+            {data.logoUrl ? (
+              <img
+                src={data.logoUrl}
+                alt={data.name}
+                className="size-16 shrink-0 rounded-md border bg-card object-contain p-1 shadow-sm"
+              />
+            ) : null}
+            <div className="min-w-0 space-y-2">
+              <h1 className="text-3xl font-bold tracking-normal">{data.name}</h1>
+              {data.description ? (
+                <p className="max-w-2xl text-sm leading-7 text-muted-foreground">{data.description}</p>
+              ) : null}
+            </div>
+          </div>
         </header>
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.products.map((product) => (

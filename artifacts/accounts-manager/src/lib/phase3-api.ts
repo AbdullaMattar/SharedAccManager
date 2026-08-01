@@ -69,6 +69,7 @@ export type PublicStore = {
   description: string;
   whatsappNumber: string;
   currency: string;
+  logoUrl: string | null;
   products: PublicStoreProduct[];
 };
 
@@ -80,6 +81,7 @@ export type WebsiteSettings = {
   name: string;
   description: string;
   publicUrl: string | null;
+  logoUrl: string | null;
   products: ProductStoreMeta[];
 };
 
@@ -230,4 +232,23 @@ export const useUploadProductImage = () => useMutation({
 export const useDeleteProductImage = () => useMutation({
   mutationFn: (productId: number) =>
     request<{ ok: true }>(`/api/website/products/${productId}/image`, { method: "DELETE" }),
+});
+
+export const useUploadStoreLogo = () => useMutation({
+  mutationFn: (file: File) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    return fetch("/api/website/logo", {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+    }).then(async (res) => {
+      if (!res.ok) throw new Error(await res.text());
+      return res.json() as Promise<{ imageUrl: string }>;
+    });
+  },
+});
+
+export const useDeleteStoreLogo = () => useMutation({
+  mutationFn: () => request<{ ok: true }>("/api/website/logo", { method: "DELETE" }),
 });

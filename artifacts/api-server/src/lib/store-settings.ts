@@ -16,6 +16,7 @@ export const STORE_SLUG_KEY = "store_slug";
 export const STORE_WHATSAPP_KEY = "store_whatsapp";
 export const STORE_NAME_KEY = "store_name";
 export const STORE_DESCRIPTION_KEY = "store_description";
+export const STORE_LOGO_KEY = "store_logo";
 export const DEMO_ORG_ID = 1;
 
 export const STORE_IMAGES_DIR = path.resolve(process.cwd(), "data", "store-images");
@@ -46,6 +47,7 @@ const STORE_KEYS = [
   STORE_WHATSAPP_KEY,
   STORE_NAME_KEY,
   STORE_DESCRIPTION_KEY,
+  STORE_LOGO_KEY,
 ] as const;
 
 type StoreKey = typeof STORE_KEYS[number];
@@ -59,6 +61,7 @@ export type WebsiteConfig = {
   name: string;
   description: string;
   publicUrl: string | null;
+  logoUrl: string | null;
 };
 
 export type PublicStoreProduct = {
@@ -79,6 +82,7 @@ export type PublicStorePayload = {
   description: string;
   whatsappNumber: string;
   currency: string;
+  logoUrl: string | null;
   products: PublicStoreProduct[];
 };
 
@@ -116,6 +120,7 @@ export function resolveWebsiteConfig(rows: SettingRow[], orgName: string, orgId?
   const whatsapp = values.store_whatsapp ? normalizeWhatsapp(values.store_whatsapp) : "";
   const name = (values.store_name ?? "").trim() || orgName;
   const description = (values.store_description ?? "").trim();
+  const logo = (values.store_logo ?? "").trim();
 
   return {
     platformEnabled: orgId === undefined
@@ -127,6 +132,7 @@ export function resolveWebsiteConfig(rows: SettingRow[], orgName: string, orgId?
     name,
     description,
     publicUrl: slug ? `/store/${slug}` : null,
+    logoUrl: logo ? `/store-images/${logo}` : null,
   };
 }
 
@@ -324,6 +330,7 @@ export async function getPublicStoreBySlug(slug: string): Promise<PublicStorePay
     description: config.description,
     whatsappNumber: config.whatsapp,
     currency: currencyRow?.value ?? "د.ب",
+    logoUrl: config.logoUrl,
     products: await collectPublicProducts(organization.id),
   };
 }

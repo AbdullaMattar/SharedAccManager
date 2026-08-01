@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type RequestHandler } from "express";
 import multer from "multer";
 import { mkdirSync } from "fs";
 import path from "path";
@@ -27,6 +27,7 @@ import {
   STORE_DESCRIPTION_KEY,
   STORE_ENABLED_KEY,
   STORE_IMAGES_DIR,
+  STORE_LOGO_KEY,
   STORE_NAME_KEY,
   STORE_SLUG_KEY,
   STORE_WHATSAPP_KEY,
@@ -48,9 +49,9 @@ const upload = multer({
     filename: (req, file, cb) => {
       const user = getRequestUser(req);
       const params = idParamsSchema.safeParse(req.params);
-      const productId = params.success ? params.data.id : 0;
+      const imageScope = params.success ? String(params.data.id) : "logo";
       const ext = file.mimetype === "image/png" ? "png" : file.mimetype === "image/webp" ? "webp" : "jpg";
-      cb(null, `${user.orgId}-${productId}.${ext}`);
+      cb(null, `${user.orgId}-${imageScope}.${ext}`);
     },
   }),
   limits: { fileSize: MAX_IMAGE_SIZE },
@@ -62,6 +63,20 @@ const upload = multer({
     }
   },
 });
+
+const handleImageUpload: RequestHandler = (req, res, next) => {
+  upload.single("image")(req, res, (err) => {
+    if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
+      res.status(413).json({ error: "ط­ط¬ظ… ط§ظ„طµظˆط±ط© ظٹطھط¬ط§ظˆط² ط§ظ„ط­ط¯ ط§ظ„ط£ظ‚طµظ‰ ط§ظ„ط¨ط§ظ„ط؛ 2 ظ…ظٹط؛ط§ط¨ط§ظٹطھ" });
+      return;
+    }
+    if (err) {
+      res.status(400).json({ error: err instanceof Error ? err.message : "ط®ط·ط£ ظپظٹ ط±ظپط¹ ط§ظ„طµظˆط±ط©" });
+      return;
+    }
+    next();
+  });
+};
 
 router.get("/website", async (req, res): Promise<void> => {
   const orgId = getRequestUser(req).orgId!;
@@ -148,6 +163,57 @@ router.patch("/website", async (req, res): Promise<void> => {
     getProductStoreMeta(orgId),
   ]);
   res.json({ ...config, products });
+});
+
+router.post("/website/logo", handleImageUpload, async (req, res): Promise<void> => {
+  const cleanupFile = () => {
+    if (req.file) deleteProductImageFile(req.file.filename);
+  };
+
+  if (!req.file) {
+    res.status(400).json({ error: "ظ„ظ… ظٹطھظ… ط¥ط±ط³ط§ظ„ طµظˆط±ط©" });
+    return;
+  }
+
+  const orgId = getRequestUser(req).orgId!;
+  const existing = await db
+    .select({ value: settingsTable.value })
+    .from(settingsTable)
+    .where(and(eq(settingsTable.orgId, orgId), eq(settingsTable.key, STORE_LOGO_KEY)))
+    .get();
+
+  if (existing?.value && existing.value !== req.file.filename) {
+    deleteProductImageFile(existing.value);
+  }
+
+  try {
+    db.transaction((tx) => {
+      upsertSetting(tx, orgId, STORE_LOGO_KEY, req.file!.filename);
+    });
+  } catch (error) {
+    cleanupFile();
+    throw error;
+  }
+
+  res.json({ imageUrl: `/store-images/${req.file.filename}` });
+});
+
+router.delete("/website/logo", async (req, res): Promise<void> => {
+  const orgId = getRequestUser(req).orgId!;
+  const existing = await db
+    .select({ value: settingsTable.value })
+    .from(settingsTable)
+    .where(and(eq(settingsTable.orgId, orgId), eq(settingsTable.key, STORE_LOGO_KEY)))
+    .get();
+
+  if (existing?.value) {
+    deleteProductImageFile(existing.value);
+    db.transaction((tx) => {
+      tx.delete(settingsTable).where(and(eq(settingsTable.orgId, orgId), eq(settingsTable.key, STORE_LOGO_KEY))).run();
+    });
+  }
+
+  res.json({ ok: true });
 });
 
 router.patch("/website/products/:id", async (req, res): Promise<void> => {
