@@ -1,7 +1,6 @@
 import { Router, type IRouter, type RequestHandler } from "express";
 import multer from "multer";
-import { mkdirSync } from "fs";
-import path from "path";
+import { mkdirSync, readFileSync } from "fs";
 import {
   auditLogTable,
   db,
@@ -17,9 +16,11 @@ import { requireAdmin, requireOrgUser } from "../lib/rbac";
 import { getRequestUser } from "../lib/request-user";
 import {
   assertStoreSlugAvailable,
+  createStoreImageFilename,
   deleteProductImageFile,
   getProductStoreMeta,
   getWebsiteConfig,
+  hasAcceptedImageSignature,
   isValidWhatsapp,
   productDescriptionKey,
   productImageKey,
@@ -50,8 +51,7 @@ const upload = multer({
       const user = getRequestUser(req);
       const params = idParamsSchema.safeParse(req.params);
       const imageScope = params.success ? String(params.data.id) : "logo";
-      const ext = file.mimetype === "image/png" ? "png" : file.mimetype === "image/webp" ? "webp" : "jpg";
-      cb(null, `${user.orgId}-${imageScope}.${ext}`);
+      cb(null, createStoreImageFilename(user.orgId!, imageScope, file.mimetype));
     },
   }),
   limits: { fileSize: MAX_IMAGE_SIZE },
@@ -67,11 +67,21 @@ const upload = multer({
 const handleImageUpload: RequestHandler = (req, res, next) => {
   upload.single("image")(req, res, (err) => {
     if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
-      res.status(413).json({ error: "ط­ط¬ظ… ط§ظ„طµظˆط±ط© ظٹطھط¬ط§ظˆط² ط§ظ„ط­ط¯ ط§ظ„ط£ظ‚طµظ‰ ط§ظ„ط¨ط§ظ„ط؛ 2 ظ…ظٹط؛ط§ط¨ط§ظٹطھ" });
+      res.status(413).json({ error: "حجم الصورة يتجاوز الحد الأقصى البالغ 2 ميغابايت" });
       return;
     }
     if (err) {
-      res.status(400).json({ error: err instanceof Error ? err.message : "ط®ط·ط£ ظپظٹ ط±ظپط¹ ط§ظ„طµظˆط±ط©" });
+      res.status(400).json({ error: err instanceof Error ? err.message : "خطأ في رفع الصورة" });
+      return;
+    }
+    try {
+      if (req.file && !hasAcceptedImageSignature(readFileSync(req.file.path), req.file.mimetype)) {
+        deleteProductImageFile(req.file.filename);
+        res.status(400).json({ error: "محتوى ملف الصورة غير صالح" });
+        return;
+      }
+    } catch (error) {
+      next(error);
       return;
     }
     next();
@@ -171,7 +181,7 @@ router.post("/website/logo", handleImageUpload, async (req, res): Promise<void> 
   };
 
   if (!req.file) {
-    res.status(400).json({ error: "ظ„ظ… ظٹطھظ… ط¥ط±ط³ط§ظ„ طµظˆط±ط©" });
+    res.status(400).json({ error: "لم يتم إرسال صورة" });
     return;
   }
 
@@ -182,10 +192,6 @@ router.post("/website/logo", handleImageUpload, async (req, res): Promise<void> 
     .where(and(eq(settingsTable.orgId, orgId), eq(settingsTable.key, STORE_LOGO_KEY)))
     .get();
 
-  if (existing?.value && existing.value !== req.file.filename) {
-    deleteProductImageFile(existing.value);
-  }
-
   try {
     db.transaction((tx) => {
       upsertSetting(tx, orgId, STORE_LOGO_KEY, req.file!.filename);
@@ -193,6 +199,10 @@ router.post("/website/logo", handleImageUpload, async (req, res): Promise<void> 
   } catch (error) {
     cleanupFile();
     throw error;
+  }
+
+  if (existing?.value && existing.value !== req.file.filename) {
+    deleteProductImageFile(existing.value);
   }
 
   res.json({ imageUrl: `/store-images/${req.file.filename}` });
@@ -207,10 +217,10 @@ router.delete("/website/logo", async (req, res): Promise<void> => {
     .get();
 
   if (existing?.value) {
-    deleteProductImageFile(existing.value);
     db.transaction((tx) => {
       tx.delete(settingsTable).where(and(eq(settingsTable.orgId, orgId), eq(settingsTable.key, STORE_LOGO_KEY))).run();
     });
+    deleteProductImageFile(existing.value);
   }
 
   res.json({ ok: true });
@@ -259,19 +269,7 @@ router.patch("/website/products/:id", async (req, res): Promise<void> => {
 
 router.post(
   "/website/products/:id/image",
-  (req, res, next) => {
-    upload.single("image")(req, res, (err) => {
-      if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
-        res.status(413).json({ error: "حجم الصورة يتجاوز الحد الأقصى البالغ 2 ميغابايت" });
-        return;
-      }
-      if (err) {
-        res.status(400).json({ error: err instanceof Error ? err.message : "خطأ في رفع الصورة" });
-        return;
-      }
-      next();
-    });
-  },
+  handleImageUpload,
   async (req, res): Promise<void> => {
     const cleanupFile = () => {
       if (req.file) deleteProductImageFile(req.file.filename);
@@ -311,13 +309,18 @@ router.post(
       .where(and(eq(settingsTable.orgId, orgId), eq(settingsTable.key, key)))
       .get();
 
+    try {
+      db.transaction((tx) => {
+        upsertSetting(tx, orgId, key, req.file!.filename);
+      });
+    } catch (error) {
+      cleanupFile();
+      throw error;
+    }
+
     if (existingRow?.value && existingRow.value !== req.file.filename) {
       deleteProductImageFile(existingRow.value);
     }
-
-    db.transaction((tx) => {
-      upsertSetting(tx, orgId, key, req.file!.filename);
-    });
 
     res.json({ imageUrl: `/store-images/${req.file.filename}` });
   },
@@ -352,10 +355,10 @@ router.delete("/website/products/:id/image", async (req, res): Promise<void> => 
     .get();
 
   if (existing?.value) {
-    deleteProductImageFile(existing.value);
     db.transaction((tx) => {
       tx.delete(settingsTable).where(and(eq(settingsTable.orgId, orgId), eq(settingsTable.key, key))).run();
     });
+    deleteProductImageFile(existing.value);
   }
 
   res.json({ ok: true });

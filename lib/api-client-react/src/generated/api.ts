@@ -2859,6 +2859,149 @@ export const useUpdateWebsiteSettings = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateWebsiteSettingsMutationOptions(options));
     }
 
+export const getUploadWebsiteLogoUrl = () => {
+
+
+
+
+  return `/api/website/logo`
+}
+
+/**
+ * @summary Upload the organization store logo
+ */
+export const uploadWebsiteLogo = async (productImageUpload: ProductImageUpload, options?: RequestInit): Promise<ProductImageUploadResponse> => {
+    const formData = new FormData();
+formData.append(`image`, productImageUpload.image);
+
+  return customFetch<ProductImageUploadResponse>(getUploadWebsiteLogoUrl(),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body:
+      formData,
+  }
+);}
+
+
+
+
+export const getUploadWebsiteLogoMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadWebsiteLogo>>, TError,{data: BodyType<ProductImageUpload>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadWebsiteLogo>>, TError,{data: BodyType<ProductImageUpload>}, TContext> => {
+
+const mutationKey = ['uploadWebsiteLogo'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadWebsiteLogo>>, {data: BodyType<ProductImageUpload>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  uploadWebsiteLogo(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadWebsiteLogoMutationResult = NonNullable<Awaited<ReturnType<typeof uploadWebsiteLogo>>>
+    export type UploadWebsiteLogoMutationBody = BodyType<ProductImageUpload>
+    export type UploadWebsiteLogoMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Upload the organization store logo
+ */
+export const useUploadWebsiteLogo = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadWebsiteLogo>>, TError,{data: BodyType<ProductImageUpload>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadWebsiteLogo>>,
+        TError,
+        {data: BodyType<ProductImageUpload>},
+        TContext
+      > => {
+      return useMutation(getUploadWebsiteLogoMutationOptions(options));
+    }
+
+export const getDeleteWebsiteLogoUrl = () => {
+
+
+
+
+  return `/api/website/logo`
+}
+
+/**
+ * @summary Delete the organization store logo
+ */
+export const deleteWebsiteLogo = async ( options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeleteWebsiteLogoUrl(),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteWebsiteLogoMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteWebsiteLogo>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteWebsiteLogo>>, TError,void, TContext> => {
+
+const mutationKey = ['deleteWebsiteLogo'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteWebsiteLogo>>, void> = () => {
+
+
+          return  deleteWebsiteLogo(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteWebsiteLogoMutationResult = NonNullable<Awaited<ReturnType<typeof deleteWebsiteLogo>>>
+
+    export type DeleteWebsiteLogoMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete the organization store logo
+ */
+export const useDeleteWebsiteLogo = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteWebsiteLogo>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteWebsiteLogo>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getDeleteWebsiteLogoMutationOptions(options));
+    }
+
 export const getUpdateWebsiteProductUrl = (id: number,) => {
 
 

@@ -759,6 +759,7 @@ export const GetPublicStoreResponse = zod.object({
   "description": zod.string(),
   "whatsappNumber": zod.string(),
   "currency": zod.string(),
+  "logoUrl": zod.string().nullable(),
   "products": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string(),
@@ -785,6 +786,7 @@ export const GetWebsiteSettingsResponse = zod.object({
   "name": zod.string(),
   "description": zod.string(),
   "publicUrl": zod.string().nullable(),
+  "logoUrl": zod.string().nullable(),
   "products": zod.array(zod.object({
   "id": zod.number(),
   "productName": zod.string(),
@@ -826,6 +828,7 @@ export const UpdateWebsiteSettingsResponse = zod.object({
   "name": zod.string(),
   "description": zod.string(),
   "publicUrl": zod.string().nullable(),
+  "logoUrl": zod.string().nullable(),
   "products": zod.array(zod.object({
   "id": zod.number(),
   "productName": zod.string(),
@@ -834,6 +837,26 @@ export const UpdateWebsiteSettingsResponse = zod.object({
   "description": zod.string(),
   "imageUrl": zod.string().nullable()
 }))
+})
+
+
+/**
+ * @summary Upload the organization store logo
+ */
+export const UploadWebsiteLogoBody = zod.object({
+  "image": zod.instanceof(File)
+})
+
+export const UploadWebsiteLogoResponse = zod.object({
+  "imageUrl": zod.string()
+})
+
+
+/**
+ * @summary Delete the organization store logo
+ */
+export const DeleteWebsiteLogoResponse = zod.object({
+  "ok": zod.boolean()
 })
 
 

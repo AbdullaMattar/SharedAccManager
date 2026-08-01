@@ -115,10 +115,10 @@ const publicDir = path.resolve(process.cwd(), "public");
 if (existsSync(publicDir)) {
   app.use(express.static(publicDir));
   app.get("/{*path}", (_req, res, next) => {
-    if (_req.path.startsWith("/api")) {
+    if (_req.path.startsWith("/api") || _req.path.startsWith("/store-images/")) {
       return next();
     }
-    res.sendFile(path.join(publicDir, "index.html"));
+    res.sendFile("index.html", { root: publicDir });
   });
 }
 

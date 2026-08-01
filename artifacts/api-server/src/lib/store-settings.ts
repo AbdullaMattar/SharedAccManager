@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
-import { existsSync, unlinkSync } from "fs";
+import { randomUUID } from "node:crypto";
+import { rmSync } from "fs";
 import path from "path";
 import {
   accountsTable,
@@ -20,6 +21,18 @@ export const STORE_LOGO_KEY = "store_logo";
 export const DEMO_ORG_ID = 1;
 
 export const STORE_IMAGES_DIR = path.resolve(process.cwd(), "data", "store-images");
+
+export function createStoreImageFilename(orgId: number, scope: string, mimeType: string): string {
+  const ext = mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg";
+  return `${orgId}-${scope}-${randomUUID()}.${ext}`;
+}
+
+export function hasAcceptedImageSignature(bytes: Buffer, mimeType: string): boolean {
+  if (mimeType === "image/png") return bytes.subarray(0, 8).equals(Buffer.from("89504e470d0a1a0a", "hex"));
+  if (mimeType === "image/jpeg") return bytes.subarray(0, 3).equals(Buffer.from("ffd8ff", "hex"));
+  if (mimeType === "image/webp") return bytes.subarray(0, 4).toString() === "RIFF" && bytes.subarray(8, 12).toString() === "WEBP";
+  return false;
+}
 
 export function productNameKey(productId: number): string {
   return `store_product_${productId}_name`;
@@ -211,10 +224,8 @@ export async function getProductStoreMeta(orgId: number): Promise<ProductStoreMe
 }
 
 export function deleteProductImageFile(filename: string): void {
-  const filePath = path.join(STORE_IMAGES_DIR, filename);
-  if (existsSync(filePath)) {
-    unlinkSync(filePath);
-  }
+  if (path.basename(filename) !== filename) return;
+  rmSync(path.join(STORE_IMAGES_DIR, filename), { force: true });
 }
 
 export async function collectPublicProducts(orgId: number): Promise<PublicStoreProduct[]> {

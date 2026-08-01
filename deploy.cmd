@@ -83,6 +83,9 @@ foreach ($c in "az","node","git") {
 az account show --output none
 if ($LASTEXITCODE -ne 0) { Write-Error "Not logged in -run: az login"; exit 1 }
 
+az extension add --name containerapp --upgrade --allow-preview true --output none
+if ($LASTEXITCODE -ne 0) { Write-Error "Could not install or update the Azure Container Apps CLI extension."; exit 1 }
+
 Write-Host "-> subscription: $((az account show --query 'name' -o tsv).Trim())"
 Write-Host "   (wrong? run: az account set --subscription NAME)"
 Write-Host ""
@@ -137,10 +140,6 @@ if ($sl) {
 }
 Write-Host "-> storage: $SA/$SHARE"
 
-# ── Remove containerapp extension -it breaks az storage + az group ───────────
-Write-Host "-> (disabling containerapp ext for storage ops)"
-az extension remove --name containerapp --output none
-
 # ── Resource group ────────────────────────────────────────────────────────────
 Write-Host "-> resource group..."
 az group create --name $RG --location $LOC --output none
@@ -155,10 +154,6 @@ if (-not $STORAGE_KEY) { Write-Error "Could not get storage key -check az errors
 Write-Host "-> file share..."
 az storage share-rm create --resource-group $RG --storage-account $SA --name $SHARE --quota 5 --output none
 $global:LASTEXITCODE = 0  # not fatal if share already exists
-
-# ── Restore containerapp extension ────────────────────────────────────────────
-Write-Host "-> (restoring containerapp ext)"
-az extension add --name containerapp --output none
 
 # ── Container Apps environment ────────────────────────────────────────────────
 az containerapp env show --name $ENV --resource-group $RG --output none

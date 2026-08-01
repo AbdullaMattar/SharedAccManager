@@ -16,5 +16,7 @@ export interface WebsiteSettings {
   description: string;
   /** @nullable */
   publicUrl: string | null;
+  /** @nullable */
+  logoUrl: string | null;
   products: ProductStoreMeta[];
 }

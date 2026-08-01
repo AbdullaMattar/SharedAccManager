@@ -457,6 +457,8 @@ export interface PublicStore {
   description: string;
   whatsappNumber: string;
   currency: string;
+  /** @nullable */
+  logoUrl: string | null;
   products: PublicStoreProduct[];
 }
 
@@ -479,6 +481,8 @@ export interface WebsiteSettings {
   description: string;
   /** @nullable */
   publicUrl: string | null;
+  /** @nullable */
+  logoUrl: string | null;
   products: ProductStoreMeta[];
 }
 

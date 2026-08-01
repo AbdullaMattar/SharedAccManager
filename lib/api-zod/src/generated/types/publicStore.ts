@@ -12,5 +12,7 @@ export interface PublicStore {
   description: string;
   whatsappNumber: string;
   currency: string;
+  /** @nullable */
+  logoUrl: string | null;
   products: PublicStoreProduct[];
 }

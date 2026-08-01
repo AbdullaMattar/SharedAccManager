@@ -871,6 +871,48 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /website/logo:
+    post:
+      operationId: uploadWebsiteLogo
+      tags: [website]
+      summary: Upload the organization store logo
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/ProductImageUpload"
+      responses:
+        "200":
+          description: Uploaded logo URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductImageUploadResponse"
+        "400":
+          description: Invalid upload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "413":
+          description: Image too large
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteWebsiteLogo
+      tags: [website]
+      summary: Delete the organization store logo
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
   /website/products/{id}:
     patch:
       operationId: updateWebsiteProduct
@@ -1917,7 +1959,7 @@ components:
 
     PublicStore:
       type: object
-      required: [name, description, whatsappNumber, currency, products]
+      required: [name, description, whatsappNumber, currency, logoUrl, products]
       properties:
         name:
           type: string
@@ -1927,6 +1969,8 @@ components:
           type: string
         currency:
           type: string
+        logoUrl:
+          type: ["string", "null"]
         products:
           type: array
           items:
@@ -1934,7 +1978,7 @@ components:
 
     WebsiteSettings:
       type: object
-      required: [platformEnabled, enabled, slug, whatsapp, name, description, publicUrl, products]
+      required: [platformEnabled, enabled, slug, whatsapp, name, description, publicUrl, logoUrl, products]
       properties:
         platformEnabled:
           type: boolean
@@ -1949,6 +1993,8 @@ components:
         description:
           type: string
         publicUrl:
+          type: ["string", "null"]
+        logoUrl:
           type: ["string", "null"]
         products:
           type: array

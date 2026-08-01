@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  createStoreImageFilename,
+  hasAcceptedImageSignature,
   resolvePlatformWebsiteEnabled,
   resolveWebsiteConfig,
   productNameKey,
@@ -7,6 +9,25 @@ import {
   productImageKey,
   STORE_LOGO_KEY,
 } from "../store-settings";
+
+describe("createStoreImageFilename", () => {
+  it("creates unique scoped filenames with the expected extension", () => {
+    const first = createStoreImageFilename(7, "logo", "image/webp");
+    const second = createStoreImageFilename(7, "logo", "image/webp");
+
+    expect(first).toMatch(/^7-logo-[0-9a-f-]{36}\.webp$/);
+    expect(second).not.toBe(first);
+  });
+});
+
+describe("hasAcceptedImageSignature", () => {
+  it("accepts real image headers and rejects spoofed content", () => {
+    expect(hasAcceptedImageSignature(Buffer.from("89504e470d0a1a0a", "hex"), "image/png")).toBe(true);
+    expect(hasAcceptedImageSignature(Buffer.from("ffd8ff", "hex"), "image/jpeg")).toBe(true);
+    expect(hasAcceptedImageSignature(Buffer.from("524946460000000057454250", "hex"), "image/webp")).toBe(true);
+    expect(hasAcceptedImageSignature(Buffer.from("<html>"), "image/png")).toBe(false);
+  });
+});
 
 describe("resolvePlatformWebsiteEnabled", () => {
   it("always keeps the demo organization enabled even if a stale setting says false", () => {
